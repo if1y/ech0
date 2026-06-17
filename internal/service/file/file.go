@@ -68,7 +68,7 @@ func NewFileService(
 		fileRepository:   fileRepo,
 		storageManager:   storageManager,
 		bus:              busProvider(),
-		keyGen:           storage.NewRandomKeyGenerator(),
+		keyGen:           storage.NewRandomKeyGenerator(storage.DefaultNameFormat),
 	}
 }
 
@@ -797,7 +797,8 @@ func (s *FileService) GetFilePresignURL(
 		return result, err
 	}
 
-	key, err := s.keyGen.GenerateKey(category, userid, dto.FileName)
+	gen := s.keyGenForCategory(category, dto.FileName)
+	key, err := gen.GenerateKey(category, userid, dto.FileName)
 	if err != nil {
 		return result, err
 	}
@@ -956,7 +957,11 @@ func (s *FileService) DeleteStoredFile(storageType string, key string) error {
 func (s *FileService) keyGenForCategory(category storage.Category, fileName string) storage.KeyGenerator {
 	_ = category
 	_ = fileName
-	return s.keyGen
+	cfg := config.Config().Storage
+	if s.storageManager != nil {
+		cfg = s.storageManager.GetStorageConfig(context.Background())
+	}
+	return storage.NewRandomKeyGenerator(cfg.NameFormat)
 }
 
 func isTempCleanupDryRun() bool {

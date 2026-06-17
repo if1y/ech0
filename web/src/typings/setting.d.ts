@@ -33,6 +33,7 @@ declare namespace App {
         use_ssl: boolean
         cdn_url: string
         path_prefix: string
+        name_format: string
         public_read: boolean
       }
 

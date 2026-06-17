@@ -47,6 +47,7 @@ type StorageConfig struct {
 	UseSSL        bool   `env:"ECH0_S3_USE_SSL"`
 	CDNURL        string `env:"ECH0_S3_CDN_URL"`
 	PathPrefix    string `env:"ECH0_S3_PATH_PREFIX"`
+	NameFormat    string `env:"ECH0_S3_NAME_FORMAT"`    // default: {userid:8}_{timestamp}_{hex:8}
 }
 
 type ServerConfig struct {

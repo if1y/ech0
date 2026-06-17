@@ -61,7 +61,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.endpoint"
+          v-tooltip="S3Setting.endpoint || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.endpoint.length === 0 ? t('commonUi.none') : S3Setting.endpoint }}
@@ -85,7 +85,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.access_key"
+          v-tooltip="S3Setting.access_key || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.access_key.length === 0 ? t('commonUi.none') : S3Setting.access_key }}
@@ -109,7 +109,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.secret_key"
+          v-tooltip="S3Setting.secret_key || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.secret_key.length === 0 ? t('commonUi.none') : S3Setting.secret_key }}
@@ -133,7 +133,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.bucket_name"
+          v-tooltip="S3Setting.bucket_name || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.bucket_name.length === 0 ? t('commonUi.none') : S3Setting.bucket_name }}
@@ -157,7 +157,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.path_prefix"
+          v-tooltip="S3Setting.path_prefix || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.path_prefix.length === 0 ? t('commonUi.none') : S3Setting.path_prefix }}
@@ -167,6 +167,30 @@
           v-model="S3Setting.path_prefix"
           type="text"
           :placeholder="t('storageSetting.pathPrefixPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
+
+      <!-- Name Format -->
+      <div
+        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 min-h-10"
+      >
+        <h2 class="font-semibold min-w-30 w-max shrink-0 whitespace-nowrap self-start pt-2">
+          {{ t('storageSetting.nameFormat') }}:
+        </h2>
+        <span
+          v-if="!storageEditMode"
+          class="flex-1 min-w-0 break-all inline-block align-middle"
+          v-tooltip="S3Setting.name_format || ''"
+          style="vertical-align: middle"
+        >
+          {{ S3Setting.name_format.length === 0 ? t('commonUi.none') : S3Setting.name_format }}
+        </span>
+        <BaseInput
+          v-else
+          v-model="S3Setting.name_format"
+          type="text"
+          :placeholder="t('storageSetting.nameFormatPlaceholder')"
           class="w-full py-1!"
         />
       </div>
@@ -182,7 +206,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.region"
+          v-tooltip="S3Setting.region || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.region.length === 0 ? t('commonUi.none') : S3Setting.region }}
@@ -206,7 +230,7 @@
         <span
           v-if="!storageEditMode"
           class="flex-1 min-w-0 truncate inline-block align-middle"
-          v-tooltip="S3Setting.cdn_url"
+          v-tooltip="S3Setting.cdn_url || ''"
           style="vertical-align: middle"
         >
           {{ S3Setting.cdn_url.length === 0 ? t('commonUi.none') : S3Setting.cdn_url }}

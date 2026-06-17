@@ -575,6 +575,8 @@
     "bucketPlaceholder": "S3 bucket name",
     "pathPrefix": "Path prefix",
     "pathPrefixPlaceholder": "S3 path prefix (optional)",
+    "nameFormat": "Naming rule",
+    "nameFormatPlaceholder": "year month day hour minute second millisecond filename timestamp userid hex userid:8 hex:8",
     "region": "S3 region",
     "regionPlaceholder": "S3 region",
     "cdnDomain": "CDN domain",

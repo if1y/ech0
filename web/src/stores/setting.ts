@@ -44,7 +44,7 @@ export const useSettingStore = defineStore('settingStore', () => {
     custom_css: '',
     custom_js: '',
   })
-  const S3Setting = ref<App.Api.Setting.S3Setting>({
+  const createDefaultS3Setting = (): App.Api.Setting.S3Setting => ({
     enable: false,
     provider: S3Provider.AWS,
     endpoint: '',
@@ -55,8 +55,10 @@ export const useSettingStore = defineStore('settingStore', () => {
     use_ssl: false,
     cdn_url: '',
     path_prefix: '',
+    name_format: '{userid:8}_{timestamp}_{hex:8}',
     public_read: true,
   })
+  const S3Setting = ref<App.Api.Setting.S3Setting>(createDefaultS3Setting())
   const OAuth2Setting = ref<App.Api.Setting.OAuth2Setting>({
     enable: false,
     provider: OAuth2Provider.GITHUB,
@@ -121,7 +123,19 @@ export const useSettingStore = defineStore('settingStore', () => {
   const getS3Setting = async () => {
     fetchGetS3Settings().then((res) => {
       if (res.code === 1) {
-        S3Setting.value = res.data
+        const defaults = createDefaultS3Setting()
+        S3Setting.value = {
+          ...defaults,
+          ...(res.data || {}),
+          endpoint: res.data?.endpoint || defaults.endpoint,
+          access_key: res.data?.access_key || defaults.access_key,
+          secret_key: res.data?.secret_key || defaults.secret_key,
+          bucket_name: res.data?.bucket_name || defaults.bucket_name,
+          region: res.data?.region || defaults.region,
+          cdn_url: res.data?.cdn_url || defaults.cdn_url,
+          path_prefix: res.data?.path_prefix || defaults.path_prefix,
+          provider: res.data?.provider || defaults.provider,
+        }
       }
     })
   }

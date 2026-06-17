@@ -153,6 +153,7 @@ func normalizeS3SettingDto(newSetting *model.S3SettingDto) model.S3Setting {
 		UseSSL:     useSSL,
 		CDNURL:     cdnURL,
 		PathPrefix: urlUtil.TrimURL(newSetting.PathPrefix),
+		NameFormat: strings.TrimSpace(newSetting.NameFormat),
 		PublicRead: newSetting.PublicRead,
 	}
 

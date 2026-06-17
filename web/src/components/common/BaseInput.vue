@@ -17,7 +17,7 @@
       <input
         :id="id"
         :type="type"
-        :value="modelValue"
+        :value="modelValue ?? ''"
         :placeholder="placeholder"
         :disabled="disabled"
         :readonly="readonly"
@@ -28,7 +28,7 @@
             : 'hover:border-[var(--input-hover-border-color)]',
           customClass,
         ]"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         v-bind="$attrs"
       />
       <slot name="suffix" />
@@ -46,6 +46,10 @@ const props = defineProps<{
   disabled?: boolean
   readonly?: boolean
   class?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
 }>()
 
 const customClass = props.class

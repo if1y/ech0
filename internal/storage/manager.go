@@ -121,6 +121,7 @@ func storageConfigFromSetting(s3 settingModel.S3Setting, defaultCfg config.Stora
 	cfg.Region = strings.TrimSpace(s3.Region)
 	cfg.CDNURL = strings.TrimRight(strings.TrimSpace(s3.CDNURL), "/")
 	cfg.PathPrefix = strings.Trim(strings.TrimSpace(s3.PathPrefix), "/")
+	cfg.NameFormat = strings.TrimSpace(s3.NameFormat)
 	cfg.UseSSL = s3.UseSSL
 
 	return cfg

@@ -31,6 +31,7 @@ type S3SettingDto struct {
 	UseSSL     bool   `json:"use_ssl"`     // 是否使用 SSL
 	CDNURL     string `json:"cdn_url"`     // CDN 加速域名（可选，没有就走 Endpoint）
 	PathPrefix string `json:"path_prefix"` // 存储路径前缀，例如 "uploads/"，方便隔离目录
+	NameFormat string `json:"name_format"` // 文件命名规则，支持变量 {year} {month} {day} {hour} {minute} {second} {millisecond} {filename} {timestamp} {userid} {userid:8} {hex:8}
 	PublicRead bool   `json:"public_read"` // 上传时是否默认设置对象为 public-read
 }
 

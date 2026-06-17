@@ -81,6 +81,7 @@ var (
 				UseSSL:     c.UseSSL,
 				CDNURL:     strings.TrimRight(strings.TrimSpace(c.CDNURL), "/"),
 				PathPrefix: strings.Trim(strings.TrimSpace(c.PathPrefix), "/"),
+				NameFormat: defaultNameFormat(strings.TrimSpace(c.NameFormat)),
 				PublicRead: true,
 			}
 		},
@@ -223,6 +224,15 @@ func (serverURLSeed) seed(ctx context.Context, kv kvstore.Store) error {
 		System.Normalize(&sys)
 	}
 	return kv.Set(ctx, commonModel.ServerURLKey, sys.ServerURL)
+}
+
+// name_format 默认风格
+const defaultNameFormatValue = "{userid:8}_{timestamp}_{hex:8}"
+func defaultNameFormat(format string) string {
+	if strings.TrimSpace(format) == "" {
+		return defaultNameFormatValue
+	}
+	return strings.TrimSpace(format)
 }
 
 // stripScheme 去掉 endpoint 的 http(s):// 前缀，与历史读路径清洗一致。

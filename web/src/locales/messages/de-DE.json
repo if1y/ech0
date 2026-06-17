@@ -575,6 +575,8 @@
     "bucketPlaceholder": "S3-Bucket-Name",
     "pathPrefix": "Pfadpräfix",
     "pathPrefixPlaceholder": "S3-Pfadpräfix (optional)",
+    "nameFormat": "Benennungsregel",
+    "nameFormatPlaceholder": "year month day hour minute second millisecond filename timestamp userid hex userid:8 hex:8",
     "region": "S3-Region",
     "regionPlaceholder": "S3-Region",
     "cdnDomain": "CDN-Domain",
