@@ -16,11 +16,9 @@ const WEBSITE_JSONLD_ID = 'website-jsonld'
 const DEFAULT_SEO_DESCRIPTION =
   'Ech0 is a next-generation open-source self-hosted platform built for individuals. It is lightweight and low-cost, making it easy to publish and share your ideas, writing, and links.'
 
-const resolvePageTitle = (siteTitle: string, routeTitle: unknown) => {
-  if (typeof routeTitle !== 'string') return siteTitle
-  const normalizedRouteTitle = routeTitle.trim()
-  if (!normalizedRouteTitle || normalizedRouteTitle === siteTitle) return siteTitle
-  return `${normalizedRouteTitle} | ${siteTitle}`
+const resolvePageTitle = (siteTitle: string, routeName: unknown) => {
+  if (routeName === 'auth') return 'Sing in to Ech0'
+  return siteTitle
 }
 
 const upsertMetaTag = (selector: string, attrs: Record<string, string>) => {
@@ -84,7 +82,7 @@ export const useSeoHead = (systemSetting: Ref<SeoSystemSetting>) => {
 
   const updateSeoMeta = () => {
     const siteTitle = (systemSetting.value.site_title || DEFAULT_SITE_TITLE).trim()
-    const pageTitle = resolvePageTitle(siteTitle, route.meta.title)
+    const pageTitle = resolvePageTitle(siteTitle, route.name)
     const routeDescription =
       typeof route.meta.description === 'string' ? route.meta.description.trim() : ''
     const description = routeDescription || DEFAULT_SEO_DESCRIPTION
@@ -123,7 +121,7 @@ export const useSeoHead = (systemSetting: Ref<SeoSystemSetting>) => {
   }
 
   watch(
-    () => [route.fullPath, route.meta.title, route.meta.description, route.meta.noindex],
+    () => [route.fullPath, route.meta.description, route.meta.noindex],
     () => {
       updateSeoMeta()
     },
