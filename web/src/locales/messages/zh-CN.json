@@ -86,7 +86,7 @@
     "addTweet": "添加 X 推文",
     "customCreatedAt": "编辑发布时间",
     "customCreatedAtPlaceholder": "留空表示使用当前时间",
-    "customCreatedAtFormat": "时间格式：YYYY-MM-DD HH:mm 或 YYYY-MM-DDTHH:mm",
+    "customCreatedAtFormat": "时间格式：YYYY-MM-DD HH:mm(:ss)",
     "locationShare": "位置分享",
     "locationHint": "点击地图选点，或手动填入经纬度",
     "locationUseCurrent": "获取当前位置",

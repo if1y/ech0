@@ -86,7 +86,7 @@
     "addTweet": "Add X post",
     "customCreatedAt": "Custom publish time",
     "customCreatedAtPlaceholder": "Leave empty to use current time",
-    "customCreatedAtFormat": "Format: YYYY-MM-DD HH:mm or YYYY-MM-DDTHH:mm",
+    "customCreatedAtFormat": "Format: YYYY-MM-DD HH:mm(:ss)",
     "locationShare": "Location",
     "locationHint": "Click on the map or enter coordinates",
     "locationUseCurrent": "Use current location",

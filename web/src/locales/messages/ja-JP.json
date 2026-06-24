@@ -86,7 +86,7 @@
     "addTweet": "X 投稿を追加",
     "customCreatedAt": "投稿時刻を編集",
     "customCreatedAtPlaceholder": "空欄の場合は現在時刻",
-    "customCreatedAtFormat": "時間形式：YYYY-MM-DD HH:mm または YYYY-MM-DDTHH:mm",
+    "customCreatedAtFormat": "時間形式：YYYY-MM-DD HH:mm(:ss)",
     "locationShare": "位置情報",
     "locationHint": "地図をタップするか座標を入力",
     "locationUseCurrent": "現在地を取得",

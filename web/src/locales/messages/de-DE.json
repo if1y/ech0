@@ -86,7 +86,7 @@
     "addTweet": "X-Beitrag hinzufügen",
     "customCreatedAt": "Veröffentlichungszeit bearbeiten",
     "customCreatedAtPlaceholder": "Leer lassen — aktuelle Zeit",
-    "customCreatedAtFormat": "Format: YYYY-MM-DD HH:mm oder YYYY-MM-DDTHH:mm",
+    "customCreatedAtFormat": "Format: YYYY-MM-DD HH:mm(:ss)",
     "locationShare": "Ort",
     "locationHint": "Klicke auf die Karte oder gib Koordinaten ein",
     "locationUseCurrent": "Aktuellen Ort verwenden",
