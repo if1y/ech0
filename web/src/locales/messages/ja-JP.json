@@ -84,7 +84,7 @@
     "addWebsiteLink": "サイトリンクを追加",
     "addLocation": "位置情報を追加",
     "addTweet": "X 投稿を追加",
-    "customCreatedAt": "投稿時刻を変更",
+    "customCreatedAt": "投稿時刻を編集",
     "customCreatedAtPlaceholder": "空欄の場合は現在時刻",
     "customCreatedAtFormat": "時間形式：YYYY-MM-DD HH:mm または YYYY-MM-DDTHH:mm",
     "locationShare": "位置情報",
