@@ -16,6 +16,7 @@
             {{ t('authPage.login') }}
           </h2>
           <button
+            type="button"
             @click="AuthMode = 'register'"
             class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition duration-200 whitespace-nowrap flex-shrink-0"
           >
@@ -86,6 +87,7 @@
             {{ t('authPage.register') }}
           </h2>
           <button
+            type="button"
             @click="AuthMode = 'login'"
             class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition duration-200 whitespace-nowrap flex-shrink-0"
           >
