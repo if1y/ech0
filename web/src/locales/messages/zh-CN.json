@@ -554,6 +554,8 @@
     "customCssPlaceholder": "请输入自定义 CSS",
     "customJs": "自定义 JS",
     "customJsPlaceholder": "请输入自定义 Script",
+    "bannerContent": "首页公告栏",
+    "bannerContentPlaceholder": "请输入公告栏内容（纯文本，留空则不显示公告栏）",
     "allowRegister": "允许注册",
     "defaultLocale": "默认语言",
     "logoUploading": "服务器 Logo 上传中...",

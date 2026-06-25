@@ -1,18 +1,11 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <!-- Copyright (C) 2025-2026 lin-snow -->
 <template>
-  <section class="home-banner" aria-label="Intro">
+  <section v-if="bannerContent" class="home-banner" aria-label="Announcement">
     <div class="home-banner__top">
-      <p class="home-banner__line">{{ t('homeBio.tagline') }}</p>
+      <p class="home-banner__line">{{ bannerContent }}</p>
     </div>
     <div class="home-banner__meta">
-      <RouterLink
-        :to="{ name: 'about' }"
-        class="home-banner__powered"
-        :aria-label="t('about.linkAriaLabel')"
-      >
-        Powered by Ech0
-      </RouterLink>
       <RouterLink
         :to="{ name: 'about' }"
         class="home-banner__about"
@@ -26,10 +19,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import Exclamation from '@/components/icons/exclamation.vue'
+import { useSettingStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+
 const { t } = useI18n()
+const settingStore = useSettingStore()
+const { SystemSetting } = storeToRefs(settingStore)
+
+const bannerContent = computed(() => SystemSetting.value?.banner_content?.trim() || '')
 </script>
 
 <style scoped>
@@ -40,7 +41,7 @@ const { t } = useI18n()
   gap: 0.75rem;
   margin-top: 0.5rem;
   margin-bottom: 0.75rem;
-  min-height: 6rem;
+  min-height: 3rem;
   padding: 0.75rem;
   border-radius: var(--radius-xs);
   background: var(--color-bg-surface);
@@ -57,7 +58,7 @@ const { t } = useI18n()
 .home-banner__meta {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.75rem;
 }
 
@@ -75,22 +76,8 @@ const { t } = useI18n()
   font-size: 0.9375rem;
   line-height: 1.55;
   color: var(--color-text-secondary);
-}
-
-.home-banner__powered {
-  margin: 0;
-  font-family: var(--font-family-display);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.home-banner__powered:hover {
-  color: var(--color-text-primary);
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .home-banner__about {

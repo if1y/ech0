@@ -20,6 +20,7 @@ declare namespace App {
         meting_api: string
         custom_css: string
         custom_js: string
+        banner_content: string
       }
 
       type S3Setting = {

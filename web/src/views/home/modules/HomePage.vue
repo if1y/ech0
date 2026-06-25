@@ -53,14 +53,6 @@
               @open-palette="paletteOpen = true"
               @open-chat="chatLauncherOpen = true"
             />
-            <a
-              href="https://github.com/lin-snow/Ech0"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="home-aside__version"
-            >
-              version: {{ settingStore.hello?.version || '--' }}
-            </a>
           </div>
         </aside>
       </div>
@@ -338,27 +330,6 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-}
-
-.home-aside__version {
-  display: inline-block;
-  margin: 0;
-  margin-top: 0.5rem;
-  padding-inline: 0.5rem;
-  font-family: var(--font-family-display);
-  font-weight: 600;
-  font-size: 0.75rem;
-  line-height: 1.25;
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.home-aside__version:hover {
-  color: var(--color-text-primary);
 }
 
 .home-content-block {

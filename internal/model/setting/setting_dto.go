@@ -18,6 +18,7 @@ type SystemSettingDto struct {
 	MetingAPI        string `json:"meting_api"`          // Meting API 地址
 	CustomCSS        string `json:"custom_css"`          // 自定义 CSS
 	CustomJS         string `json:"custom_js"`           // 自定义 JS
+	BannerContent    string `json:"banner_content"`      // 自定义公告栏（支持 HTML/MD，为空则不显示公告栏）
 }
 
 type S3SettingDto struct {

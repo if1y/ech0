@@ -94,6 +94,7 @@ func (settingService *SettingService) UpdateSetting(
 		setting.MetingAPI = urlUtil.TrimURL(newSetting.MetingAPI)
 		setting.CustomCSS = newSetting.CustomCSS
 		setting.CustomJS = newSetting.CustomJS
+		setting.BannerContent = newSetting.BannerContent
 
 		if err := coreSetting.Set(ctx, settingService.durableKV, coreSetting.System, setting); err != nil {
 			return err

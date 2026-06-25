@@ -39,6 +39,7 @@ var (
 				MetingAPI:     urlUtil.TrimURL(c.MetingAPI),
 				CustomCSS:     c.CustomCSS,
 				CustomJS:      c.CustomJS,
+				BannerContent: "",
 			}
 		},
 		Normalize: func(s *settingModel.SystemSetting) {

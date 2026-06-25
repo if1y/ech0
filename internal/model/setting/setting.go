@@ -16,18 +16,19 @@ const (
 
 // SystemSetting 定义系统设置实体
 type SystemSetting struct {
-	SiteTitle     string `json:"site_title"`     // 站点标题
-	ServerLogo    string `json:"server_logo"`    // 服务器Logo
-	ServerName    string `json:"server_name"`    // 服务器名称
-	ServerURL     string `json:"server_url"`     // 服务器地址
-	AllowRegister bool   `json:"allow_register"` // 是否允许注册'
-	DefaultLocale string `json:"default_locale"` // 站点默认语言（如 zh-CN / en-US）
-	ICPNumber     string `json:"ICP_number"`     // 备案号
-	FooterContent string `json:"footer_content"` // 自定义页脚内容
-	FooterLink    string `json:"footer_link"`    // 自定义页脚链接
-	MetingAPI     string `json:"meting_api"`     // Meting API 地址
-	CustomCSS     string `json:"custom_css"`     // 自定义 CSS
-	CustomJS      string `json:"custom_js"`      // 自定义 JS
+	SiteTitle     string `json:"site_title"`      // 站点标题
+	ServerLogo    string `json:"server_logo"`     // 服务器Logo
+	ServerName    string `json:"server_name"`     // 服务器名称
+	ServerURL     string `json:"server_url"`      // 服务器地址
+	AllowRegister bool   `json:"allow_register"`  // 是否允许注册'
+	DefaultLocale string `json:"default_locale"`  // 站点默认语言（如 zh-CN / en-US）
+	ICPNumber     string `json:"ICP_number"`      // 备案号
+	FooterContent string `json:"footer_content"`  // 自定义页脚内容
+	FooterLink    string `json:"footer_link"`     // 自定义页脚链接
+	MetingAPI     string `json:"meting_api"`      // Meting API 地址
+	CustomCSS     string `json:"custom_css"`      // 自定义 CSS
+	CustomJS      string `json:"custom_js"`       // 自定义 JS
+	BannerContent string `json:"banner_content"`  // 自定义公告栏（支持 HTML/MD，为空则不显示公告栏）
 }
 
 // S3Setting 定义 S3 存储设置实体

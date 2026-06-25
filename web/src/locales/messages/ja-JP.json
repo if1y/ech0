@@ -554,6 +554,8 @@
     "customCssPlaceholder": "カスタム CSS を入力してください",
     "customJs": "カスタム JS",
     "customJsPlaceholder": "カスタム Script を入力してください",
+    "bannerContent": "ホームバナー",
+    "bannerContentPlaceholder": "バナー内容を入力してください（プレーンテキスト、空欄の場合は非表示）",
     "allowRegister": "登録を許可",
     "defaultLocale": "既定の言語",
     "logoUploading": "サーバーロゴをアップロード中...",

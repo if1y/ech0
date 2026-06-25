@@ -43,6 +43,7 @@ export const useSettingStore = defineStore('settingStore', () => {
     meting_api: '',
     custom_css: '',
     custom_js: '',
+    banner_content: '',
   })
   const S3Setting = ref<App.Api.Setting.S3Setting>({
     enable: false,

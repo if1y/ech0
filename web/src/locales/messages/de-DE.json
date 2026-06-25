@@ -554,6 +554,8 @@
     "customCssPlaceholder": "Eigenes CSS eingeben",
     "customJs": "Eigenes JS",
     "customJsPlaceholder": "Eigenes Script eingeben",
+    "bannerContent": "Startseiten-Banner",
+    "bannerContentPlaceholder": "Banner-Text eingeben (Klartext; leer lassen zum Ausblenden)",
     "allowRegister": "Registrierung erlauben",
     "defaultLocale": "Standardsprache",
     "logoUploading": "Server-Logo wird hochgeladen…",

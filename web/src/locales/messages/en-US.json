@@ -554,6 +554,8 @@
     "customCssPlaceholder": "Enter custom CSS",
     "customJs": "Custom JS",
     "customJsPlaceholder": "Enter custom script",
+    "bannerContent": "Home Banner",
+    "bannerContentPlaceholder": "Enter banner content (plain text; leave empty to hide the banner)",
     "allowRegister": "Allow registration",
     "defaultLocale": "Default language",
     "logoUploading": "Uploading server logo...",
