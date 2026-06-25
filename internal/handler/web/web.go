@@ -4,6 +4,11 @@
 package handler
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"io/fs"
 	"mime"
 	"net/http"
@@ -12,6 +17,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lin-snow/ech0/internal/kvstore"
+	commonModel "github.com/lin-snow/ech0/internal/model/common"
 	"github.com/lin-snow/ech0/internal/visitor"
 	"github.com/lin-snow/ech0/template"
 )
@@ -23,13 +30,24 @@ var spaBypassPrefixes = []string{
 	"/swagger",
 }
 
+// loaderConfig 仅取加载页个性化所需的 3 个字段，从 KV 的 system_settings JSON 中解出。
+type loaderConfig struct {
+	LoaderImageURL  string `json:"loader_image_url"`
+	LoaderBrandText string `json:"loader_brand_text"`
+	LoaderSlogan    string `json:"loader_slogan"`
+}
+
 type WebHandler struct {
 	visitorTracker *visitor.Tracker
+	durableKV      kvstore.Store
 }
 
 // NewWebHandler WebHandler 的构造函数
-func NewWebHandler(visitorTracker *visitor.Tracker) *WebHandler {
-	return &WebHandler{visitorTracker: visitorTracker}
+func NewWebHandler(visitorTracker *visitor.Tracker, durableKV kvstore.Store) *WebHandler {
+	return &WebHandler{
+		visitorTracker: visitorTracker,
+		durableKV:      durableKV,
+	}
 }
 
 // Templates 返回一个处理前端编译后文件的 gin.HandlerFunc
@@ -55,26 +73,14 @@ func (webHandler *WebHandler) Templates() gin.HandlerFunc {
 		}
 
 		fullPath := path.Clean("." + requestPath)
+		if requestPath == "/index.html" {
+			webHandler.serveIndexHTML(ctx, fileServer)
+			return
+		}
 		f, err := fileServer.Open(fullPath)
 		if err != nil {
-			// fallback 到 index.html
-			fallback, err := fileServer.Open("index.html")
-			if err != nil {
-				ctx.Status(http.StatusNotFound)
-				return
-			}
-			defer func() { _ = fallback.Close() }()
-			fallbackStat, _ := fallback.Stat()
-			webHandler.visitorTracker.Record(ctx.Request, ctx.ClientIP())
-			ctx.Header("Content-Type", "text/html; charset=utf-8")
-			setCacheControlHeader(ctx, "/index.html")
-			http.ServeContent(
-				ctx.Writer,
-				ctx.Request,
-				"index.html",
-				fallbackStat.ModTime(),
-				fallback,
-			)
+			// SPA fallback → 一律返回 index.html（含注入）
+			webHandler.serveIndexHTML(ctx, fileServer)
 			return
 		}
 		defer func() { _ = f.Close() }()
@@ -100,11 +106,55 @@ func (webHandler *WebHandler) Templates() gin.HandlerFunc {
 
 		ctx.Header("Content-Type", getMimeType(fullPath))
 		setCacheControlHeader(ctx, requestPath)
-		if requestPath == "/index.html" {
-			webHandler.visitorTracker.Record(ctx.Request, ctx.ClientIP())
-		}
 		http.ServeContent(ctx.Writer, ctx.Request, fullPath, stat.ModTime(), f)
 	}
+}
+
+// serveIndexHTML 读取 index.html 原始内容，注入 loader 配置后写入响应。
+func (webHandler *WebHandler) serveIndexHTML(ctx *gin.Context, fileServer http.FileSystem) {
+	fallback, err := fileServer.Open("index.html")
+	if err != nil {
+		ctx.Status(http.StatusNotFound)
+		return
+	}
+	defer func() { _ = fallback.Close() }()
+
+	fallbackStat, _ := fallback.Stat()
+	raw, err := io.ReadAll(fallback)
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	// 从 KV 读取 loader 配置
+	scriptTag := webHandler.buildLoaderScript()
+
+	// 在 </head> 之前插入 <script> 标签（同步，在 Vue 加载前执行）
+	injected := bytes.Replace(raw, []byte("</head>"), []byte(scriptTag+"</head>"), 1)
+
+	webHandler.visitorTracker.Record(ctx.Request, ctx.ClientIP())
+	ctx.Header("Content-Type", "text/html; charset=utf-8")
+	setCacheControlHeader(ctx, "/index.html")
+	http.ServeContent(ctx.Writer, ctx.Request, "index.html", fallbackStat.ModTime(), bytes.NewReader(injected))
+}
+
+// buildLoaderScript 从 KV 读取 system_settings，返回 <script> 标签内容。
+func (webHandler *WebHandler) buildLoaderScript() string {
+	var cfg loaderConfig
+
+	if webHandler.durableKV != nil {
+		raw, err := webHandler.durableKV.Get(context.Background(), commonModel.SystemSettingsKey)
+		if err == nil && raw != "" {
+			// 忽略解析错误，解析失败时 cfg 保持零值（即全部为空字符串，前端不做替换）
+			_ = json.Unmarshal([]byte(raw), &cfg)
+		}
+	}
+
+	// 将 3 个字段序列化成 JSON 对象字符串
+	jsonBytes, _ := json.Marshal(cfg)
+	jsonStr := string(jsonBytes)
+
+	return fmt.Sprintf(`<script>window.__LOADER_CONFIG__=%s;</script>`, jsonStr)
 }
 
 func setCacheControlHeader(ctx *gin.Context, requestPath string) {

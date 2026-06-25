@@ -297,7 +297,7 @@ func buildTestMWDeps() *middleware.Deps {
 
 func buildTestHandlers() *handler.Bundle {
 	return handler.NewBundle(
-		webHandler.NewWebHandler(visitor.NewTracker()),
+		webHandler.NewWebHandler(visitor.NewTracker(), nil),
 		userHandler.NewUserHandler(nil),
 		authHandler.NewAuthHandler(nil, nil),
 		echoHandler.NewEchoHandler(nil),

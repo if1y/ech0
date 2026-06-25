@@ -18,7 +18,7 @@ func init() {
 
 func newTemplatesRouter() *gin.Engine {
 	r := gin.New()
-	r.NoRoute(NewWebHandler(visitor.NewTracker()).Templates())
+	r.NoRoute(NewWebHandler(visitor.NewTracker(), nil).Templates())
 	return r
 }
 

@@ -249,6 +249,36 @@
       <h1 class="loader-brand" id="loader-brand">Ech0</h1>
       <p id="loader-slogan">静候灵感落笔</p>
     </div>
+    <script>
+      // 服务端注入的 loader 自定义配置（空对象表示使用默认值）
+      var lc = window.__LOADER_CONFIG__ || {};
+      // 自定义图片
+      if (lc.loader_image_url) {
+        var w = document.getElementById('loader-widget');
+        if (w) {
+          var svg = document.getElementById('loader-widget-svg');
+          if (svg) svg.style.display = 'none';
+          var img = document.createElement('img');
+          img.src = lc.loader_image_url;
+          img.alt = '';
+          img.className = 'loader-custom-image';
+          w.appendChild(img);
+        }
+      }
+      // 自定义品牌文字
+      if (lc.loader_brand_text) {
+        var b = document.getElementById('loader-brand');
+        if (b) b.textContent = lc.loader_brand_text;
+      }
+      // 自定义口号
+      if (lc.loader_slogan) {
+        var s = document.getElementById('loader-slogan');
+        if (s) {
+          s.textContent = lc.loader_slogan;
+          s.classList.add('no-dots');
+        }
+      }
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

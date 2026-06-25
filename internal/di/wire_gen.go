@@ -135,10 +135,10 @@ func BuildEventRegistrar(dbProvider func() *gorm.DB, ebProvider func() *busen.Bu
 // BuildHandlers 使用 wire 生成的代码来构建 Handlers 实例。
 // tracker 由顶层 BuildApp/BuildServer 注入,保证整个进程只有一个 visitor.Tracker 实例。
 func BuildHandlers(dbProvider func() *gorm.DB, appCache cache.ICache[string, any], tx transaction.Transactor, ebProvider func() *busen.Bus, tracker *visitor.Tracker, jobManager *job.Manager, storageManager *storage.Manager) (*handler.Bundle, error) {
-	webHandler := handler2.NewWebHandler(tracker)
 	userRepository := repository4.NewUserRepository(dbProvider, appCache)
 	keyValueRepository := keyvalue.NewKeyValueRepository(dbProvider, appCache)
 	persistent := kvstore.NewPersistent(keyValueRepository)
+	webHandler := handler2.NewWebHandler(tracker, persistent)
 	commonRepository := repository5.NewCommonRepository(dbProvider)
 	fileRepository := repository6.NewFileRepository(dbProvider)
 	fileService := service2.NewFileService(tx, commonRepository, fileRepository, storageManager, ebProvider)
