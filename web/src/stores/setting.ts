@@ -35,6 +35,12 @@ export const useSettingStore = defineStore('settingStore', () => {
     server_logo_file_id: '',
     server_name: import.meta.env.VITE_APP_NAME,
     server_url: '',
+    // 加载页自定义图片, 空则用笑脸
+    loader_image_url: '',
+    // 加载页标题, 空则用"Ech0"
+    loader_brand_text: '',
+    // 加载页口号，空则用"静候灵感落笔"
+    loader_slogan: '',
     allow_register: true,
     default_locale: 'zh-CN',
     ICP_number: '',

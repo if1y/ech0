@@ -16,18 +16,21 @@ const (
 
 // SystemSetting 定义系统设置实体
 type SystemSetting struct {
-	SiteTitle     string `json:"site_title"`     // 站点标题
-	ServerLogo    string `json:"server_logo"`    // 服务器Logo
-	ServerName    string `json:"server_name"`    // 服务器名称
-	ServerURL     string `json:"server_url"`     // 服务器地址
-	AllowRegister bool   `json:"allow_register"` // 是否允许注册'
-	DefaultLocale string `json:"default_locale"` // 站点默认语言（如 zh-CN / en-US）
-	ICPNumber     string `json:"ICP_number"`     // 备案号
-	FooterContent string `json:"footer_content"` // 自定义页脚内容
-	FooterLink    string `json:"footer_link"`    // 自定义页脚链接
-	MetingAPI     string `json:"meting_api"`     // Meting API 地址
-	CustomCSS     string `json:"custom_css"`     // 自定义 CSS
-	CustomJS      string `json:"custom_js"`      // 自定义 JS
+	SiteTitle       string `json:"site_title"`        // 站点标题
+	ServerLogo      string `json:"server_logo"`       // 服务器Logo
+	ServerName      string `json:"server_name"`       // 服务器名称
+	ServerURL       string `json:"server_url"`        // 服务器地址
+	LoaderImageURL  string `json:"loader_image_url"`  // 加载页自定义图片, 空则用笑脸
+	LoaderBrandText string `json:"loader_brand_text"` // 加载页标题, 空则用“Ech0”
+	LoaderSlogan    string `json:"loader_slogan"`     // 加载页口号，空则用“静候灵感落笔”
+	AllowRegister   bool   `json:"allow_register"`    // 是否允许注册
+	DefaultLocale   string `json:"default_locale"`    // 站点默认语言（如 zh-CN / en-US）
+	ICPNumber       string `json:"ICP_number"`        // 备案号
+	FooterContent   string `json:"footer_content"`    // 自定义页脚内容
+	FooterLink      string `json:"footer_link"`       // 自定义页脚链接
+	MetingAPI       string `json:"meting_api"`        // Meting API 地址
+	CustomCSS       string `json:"custom_css"`        // 自定义 CSS
+	CustomJS        string `json:"custom_js"`         // 自定义 JS
 }
 
 // S3Setting 定义 S3 存储设置实体

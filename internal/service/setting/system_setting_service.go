@@ -86,6 +86,9 @@ func (settingService *SettingService) UpdateSetting(
 		setting.ServerLogo = newSetting.ServerLogo
 		setting.ServerName = newSetting.ServerName
 		setting.ServerURL = urlUtil.TrimURL(newSetting.ServerURL)
+		setting.LoaderImageURL = newSetting.LoaderImageURL
+		setting.LoaderBrandText = newSetting.LoaderBrandText
+		setting.LoaderSlogan = newSetting.LoaderSlogan
 		setting.AllowRegister = newSetting.AllowRegister
 		setting.DefaultLocale = i18nUtil.ResolveLocale(newSetting.DefaultLocale)
 		setting.ICPNumber = newSetting.ICPNumber

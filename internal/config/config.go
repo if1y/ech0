@@ -109,17 +109,20 @@ type UploadConfig struct {
 }
 
 type SettingConfig struct {
-	SiteTitle     string `env:"ECH0_SETTING_SITE_TITLE"`     // 网站标题
-	ServerLogo    string `env:"ECH0_SETTING_SERVER_LOGO"`    // 服务器Logo
-	Servername    string `env:"ECH0_SETTING_SERVER_NAME"`    // 服务器名称
-	Serverurl     string `env:"ECH0_SETTING_SERVER_URL"`     // 服务器 URL
-	AllowRegister bool   `env:"ECH0_SETTING_ALLOW_REGISTER"` // 是否允许注册
-	Icpnumber     string `env:"ECH0_SETTING_ICP_NUMBER"`     // ICP 备案号
-	FooterContent string `env:"ECH0_SETTING_FOOTER_CONTENT"` // 自定义页脚内容
-	FooterLink    string `env:"ECH0_SETTING_FOOTER_LINK"`    // 自定义页脚链接
-	MetingAPI     string `env:"ECH0_SETTING_METING_API"`     // Meting API 地址
-	CustomCSS     string `env:"ECH0_SETTING_CUSTOM_CSS"`     // 自定义 CSS 样式
-	CustomJS      string `env:"ECH0_SETTING_CUSTOM_JS"`      // 自定义 JS 脚本
+	SiteTitle       string `env:"ECH0_SETTING_SITE_TITLE"`        // 网站标题
+	ServerLogo      string `env:"ECH0_SETTING_SERVER_LOGO"`       // 服务器Logo
+	Servername      string `env:"ECH0_SETTING_SERVER_NAME"`       // 服务器名称
+	Serverurl       string `env:"ECH0_SETTING_SERVER_URL"`        // 服务器 URL
+	LoaderImageURL  string `env:"ECH0_SETTING_LOADER_IMAGE_URL"`  // 加载页自定义图片
+	LoaderBrandText string `env:"ECH0_SETTING_LOADER_BRAND_TEXT"` // 加载页标题
+	LoaderSlogan    string `env:"ECH0_SETTING_LOADER_SLOGAN"`     // 加载页口号
+	AllowRegister   bool   `env:"ECH0_SETTING_ALLOW_REGISTER"`    // 是否允许注册
+	Icpnumber       string `env:"ECH0_SETTING_ICP_NUMBER"`        // ICP 备案号
+	FooterContent   string `env:"ECH0_SETTING_FOOTER_CONTENT"`    // 自定义页脚内容
+	FooterLink      string `env:"ECH0_SETTING_FOOTER_LINK"`       // 自定义页脚链接
+	MetingAPI       string `env:"ECH0_SETTING_METING_API"`        // Meting API 地址
+	CustomCSS       string `env:"ECH0_SETTING_CUSTOM_CSS"`        // 自定义 CSS 样式
+	CustomJS        string `env:"ECH0_SETTING_CUSTOM_JS"`         // 自定义 JS 脚本
 }
 
 type CommentConfig struct {
@@ -274,17 +277,20 @@ func defaultConfig() *AppConfig {
 			RateLimitPerSec: 20,
 		},
 		Setting: SettingConfig{
-			SiteTitle:     "Ech0",
-			ServerLogo:    "/Ech0.svg",
-			Servername:    "Ech0",
-			Serverurl:     "https://ech0.example.com",
-			AllowRegister: true,
-			Icpnumber:     "",
-			FooterContent: "",
-			FooterLink:    "",
-			MetingAPI:     "",
-			CustomCSS:     "",
-			CustomJS:      "",
+			SiteTitle:       "Ech0",
+			ServerLogo:      "/Ech0.svg",
+			Servername:      "Ech0",
+			Serverurl:       "https://ech0.example.com",
+			LoaderImageURL:  "",
+			LoaderBrandText: "",
+			LoaderSlogan:    "",
+			AllowRegister:   true,
+			Icpnumber:       "",
+			FooterContent:   "",
+			FooterLink:      "",
+			MetingAPI:       "",
+			CustomCSS:       "",
+			CustomJS:        "",
 		},
 		Comment: CommentConfig{
 			EnableComment:         false,

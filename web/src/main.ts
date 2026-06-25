@@ -62,6 +62,56 @@ app.component('BaseDialog', BaseDialog)
 
 app.mount('#app')
 
+// --- 加载页个性化：用系统设置中的自定义内容替换 loader 占位 ---
+function applyLoaderCustomization() {
+  const setting = settingStore.SystemSetting
+  if (!setting) return
+
+  // 加载页图片：loader_image_url -> 显示为 <img>
+  const loaderWidget = document.getElementById('loader-widget')
+  if (loaderWidget && setting.loader_image_url) {
+    const existingImg = loaderWidget.querySelector('img')
+    if (!existingImg) {
+      // 隐藏 SVG，插入 <img>
+      const svg = document.getElementById('loader-widget-svg')
+      if (svg) svg.style.display = 'none'
+      const img = document.createElement('img')
+      img.src = setting.loader_image_url
+      img.alt = ''
+      img.className = 'loader-custom-image'
+      loaderWidget.appendChild(img)
+    } else {
+      existingImg.src = setting.loader_image_url
+    }
+  }
+
+  // 加载页标题：不为空时覆盖，空则保留 HTML 默认
+  const brandEl = document.getElementById('loader-brand')
+  if (brandEl && setting.loader_brand_text) {
+    brandEl.textContent = setting.loader_brand_text
+  }
+
+  // 加载页口号：不为空时覆盖并去掉末尾「...」动画点，空则保留 HTML 默认
+  const sloganEl = document.getElementById('loader-slogan')
+  if (sloganEl && setting.loader_slogan) {
+    sloganEl.textContent = setting.loader_slogan
+    sloganEl.classList.add('no-dots')
+  }
+}
+
+// 等 setting store 就绪后再应用自定义内容
+const settingWatchTimer = window.setInterval(() => {
+  if (!settingStore.loading) {
+    window.clearInterval(settingWatchTimer)
+    applyLoaderCustomization()
+  }
+}, 50)
+// 5 秒兜底：即使 setting 还未加载完也不再阻塞
+window.setTimeout(() => {
+  window.clearInterval(settingWatchTimer)
+  applyLoaderCustomization()
+}, 5000)
+
 // 启动加载页淡出并恢复页面滚动。
 // 等待 router.isReady() 以确保首个 route 已完成导航守卫与组件解析，
 // 避免 loader 在白屏阶段就开始淡出。

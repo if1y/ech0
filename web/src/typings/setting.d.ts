@@ -12,6 +12,9 @@ declare namespace App {
         server_logo_file_id?: string
         server_name: string
         server_url: string
+        loader_image_url: string
+        loader_brand_text: string
+        loader_slogan: string
         allow_register: boolean
         default_locale: string
         ICP_number: string

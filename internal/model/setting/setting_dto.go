@@ -10,6 +10,9 @@ type SystemSettingDto struct {
 	ServerLogoFileID string `json:"server_logo_file_id"` // 服务器Logo文件ID（用于确认临时文件）
 	ServerName       string `json:"server_name"`         // 服务器名称
 	ServerURL        string `json:"server_url"`          // 服务器地址
+	LoaderImageURL   string `json:"loader_image_url"`    // 加载页自定义图片, 空则用笑脸
+	LoaderBrandText  string `json:"loader_brand_text"`   // 加载页标题, 空则用"Ech0"
+	LoaderSlogan     string `json:"loader_slogan"`       // 加载页口号, 空则用"静候灵感落笔"
 	AllowRegister    bool   `json:"allow_register"`      // 是否允许注册
 	DefaultLocale    string `json:"default_locale"`      // 站点默认语言（如 zh-CN / en-US）
 	ICPNumber        string `json:"ICP_number"`          // 备案号

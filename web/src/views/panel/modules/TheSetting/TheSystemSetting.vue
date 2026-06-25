@@ -119,6 +119,87 @@
           class="w-full py-1!"
         />
       </div>
+      <!-- 加载页自定义图片 -->
+      <div
+        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"
+      >
+        <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
+          {{ t('systemSetting.loaderImageUrl') }}:
+        </h2>
+        <span
+          v-if="!editMode"
+          class="flex-1 min-w-0 truncate inline-block align-middle"
+          v-tooltip="SystemSetting.loader_image_url"
+          style="vertical-align: middle"
+        >
+          {{
+            SystemSetting.loader_image_url.length === 0
+              ? t('commonUi.none')
+              : SystemSetting.loader_image_url
+          }}
+        </span>
+        <BaseInput
+          v-else
+          v-model="SystemSetting.loader_image_url"
+          type="text"
+          :placeholder="t('systemSetting.loaderImageUrlPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
+      <!-- 加载页标题 -->
+      <div
+        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"
+      >
+        <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
+          {{ t('systemSetting.loaderBrandText') }}:
+        </h2>
+        <span
+          v-if="!editMode"
+          class="flex-1 min-w-0 truncate inline-block align-middle"
+          v-tooltip="SystemSetting.loader_brand_text"
+          style="vertical-align: middle"
+        >
+          {{
+            SystemSetting.loader_brand_text.length === 0
+              ? t('commonUi.none')
+              : SystemSetting.loader_brand_text
+          }}
+        </span>
+        <BaseInput
+          v-else
+          v-model="SystemSetting.loader_brand_text"
+          type="text"
+          :placeholder="t('systemSetting.loaderBrandTextPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
+      <!-- 加载页口号 -->
+      <div
+        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"
+      >
+        <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
+          {{ t('systemSetting.loaderSlogan') }}:
+        </h2>
+        <span
+          v-if="!editMode"
+          class="flex-1 min-w-0 truncate inline-block align-middle"
+          v-tooltip="SystemSetting.loader_slogan"
+          style="vertical-align: middle"
+        >
+          {{
+            SystemSetting.loader_slogan.length === 0
+              ? t('commonUi.none')
+              : SystemSetting.loader_slogan
+          }}
+        </span>
+        <BaseInput
+          v-else
+          v-model="SystemSetting.loader_slogan"
+          type="text"
+          :placeholder="t('systemSetting.loaderSloganPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
       <!-- 自定义页脚内容 -->
       <div
         class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"
