@@ -999,7 +999,6 @@
     "linkAriaLabel": "About this Ech0 instance",
     "fieldSource": "Source",
     "viewSource": "View source on GitHub",
-    "viewSourceAtCommit": "View source {'@'} {commit} on GitHub",
     "poweredBy": "Powered by Ech0"
   },
   "echoPage": {

@@ -4,12 +4,13 @@ GOHOSTARCH:=$(shell go env GOHOSTARCH)
 GOPATH:=$(shell go env GOPATH)
 VERSION=$(shell git describe --tags --always 2>/dev/null || echo unknown)
 BUILD_TIME=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
+# 构建标识，默认 "custom"。构建时可通过 BUILD_LABEL=xxx make build 覆盖。
+BUILD_LABEL?=custom
 
-# Inject build metadata into the binary so /hello can return the real commit/time.
-# 这两个变量必须是 var（不能是 const），见 internal/version/version.go。
+# Inject build metadata into the binary. Commit defaults to "custom" to avoid
+# leaking the real git hash; override via BUILD_LABEL env var.
 VERSION_PKG=github.com/lin-snow/ech0/internal/version
-LDFLAGS=-X $(VERSION_PKG).Commit=$(GIT_COMMIT) -X $(VERSION_PKG).BuildTime=$(BUILD_TIME)
+LDFLAGS=-X $(VERSION_PKG).Commit=$(BUILD_LABEL) -X $(VERSION_PKG).BuildTime=$(BUILD_TIME)
 
 # Docker variables
 DOCKER_REGISTRY?=sn0wl1n

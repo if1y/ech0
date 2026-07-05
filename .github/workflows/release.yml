@@ -76,11 +76,11 @@ jobs:
           ARM64_TOOLCHAIN: ${{ env.ARM64_TOOLCHAIN }}
         run: |
           set -euo pipefail
-          # Define linker flags for a static build + inject commit / build time so /hello returns the real values.
-          GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+          # Inject build time. Commit defaults to "custom" to avoid leaking the
+          # real git hash; set BUILD_LABEL env in the workflow to override.
           BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           VERSION_PKG="github.com/lin-snow/ech0/internal/version"
-          STATIC_LDFLAGS="-linkmode external -extldflags '-static' -X ${VERSION_PKG}.Commit=${GIT_COMMIT} -X ${VERSION_PKG}.BuildTime=${BUILD_TIME}"
+          STATIC_LDFLAGS="-linkmode external -extldflags '-static' -X ${VERSION_PKG}.Commit=custom -X ${VERSION_PKG}.BuildTime=${BUILD_TIME}"
           OUTPUT_NAME="ech0-${{ matrix.goos }}-${{ matrix.goarch }}"
 
           if [ "${{ matrix.goarch }}" = "arm64" ]; then

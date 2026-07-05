@@ -999,7 +999,6 @@
     "linkAriaLabel": "この Ech0 インスタンスについて",
     "fieldSource": "ソースコード",
     "viewSource": "GitHub でソースを見る",
-    "viewSourceAtCommit": "GitHub で commit {'@'} {commit} のソースを見る",
     "poweredBy": "Powered by Ech0"
   },
   "echoPage": {

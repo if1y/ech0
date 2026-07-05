@@ -999,7 +999,6 @@
     "linkAriaLabel": "Über diese Ech0-Instanz",
     "fieldSource": "Quellcode",
     "viewSource": "Quellcode auf GitHub ansehen",
-    "viewSourceAtCommit": "Quellcode {'@'} {commit} auf GitHub ansehen",
     "poweredBy": "Powered by Ech0"
   },
   "echoPage": {

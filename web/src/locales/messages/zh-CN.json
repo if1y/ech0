@@ -999,7 +999,6 @@
     "linkAriaLabel": "关于本 Ech0 实例",
     "fieldSource": "源码",
     "viewSource": "在 GitHub 上查看源代码",
-    "viewSourceAtCommit": "在 GitHub 上查看 commit {'@'} {commit} 的源代码",
     "poweredBy": "Powered by Ech0"
   },
   "echoPage": {
