@@ -218,6 +218,10 @@ func (o *ObjectFS) List(ctx context.Context, prefix string) (*ListResult, error)
 		}
 		for _, obj := range out.Contents {
 			k := aws.ToString(obj.Key)
+			// Filter prefix from list file respond contents (Upyun)
+			if k == s3Prefix {
+				continue
+			}
 			if len(k) > len(o.basePrefix) {
 				k = k[len(o.basePrefix):]
 			}
