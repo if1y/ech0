@@ -123,6 +123,8 @@ type SettingConfig struct {
 	ServerLogo    string `env:"ECH0_SETTING_SERVER_LOGO"`    // 服务器Logo
 	Servername    string `env:"ECH0_SETTING_SERVER_NAME"`    // 服务器名称
 	Serverurl     string `env:"ECH0_SETTING_SERVER_URL"`     // 服务器 URL
+	BannerContent string `env:"ECH0_SETTING_BANNER_CONTENT"` // 自定义公告栏
+	SidebarText   string `env:"ECH0_SETTING_SIDEBAR_TEXT"`   // 自定义侧栏文本
 	AllowRegister bool   `env:"ECH0_SETTING_ALLOW_REGISTER"` // 是否允许注册
 	Icpnumber     string `env:"ECH0_SETTING_ICP_NUMBER"`     // ICP 备案号
 	FooterContent string `env:"ECH0_SETTING_FOOTER_CONTENT"` // 自定义页脚内容
@@ -294,6 +296,8 @@ func defaultConfig() *AppConfig {
 			ServerLogo:    "/Ech0.svg",
 			Servername:    "Ech0",
 			Serverurl:     "https://ech0.example.com",
+			BannerContent: "",
+			SidebarText:   "",
 			AllowRegister: true,
 			Icpnumber:     "",
 			FooterContent: "",

@@ -31,6 +31,8 @@ var (
 				ServerLogo:    c.ServerLogo,
 				ServerName:    c.Servername,
 				ServerURL:     urlUtil.TrimURL(c.Serverurl),
+				BannerContent: c.BannerContent,
+				SidebarText:   c.SidebarText,
 				AllowRegister: c.AllowRegister,
 				DefaultLocale: string(commonModel.DefaultLocale),
 				ICPNumber:     c.Icpnumber,
