@@ -31,6 +31,8 @@ var (
 				ServerLogo:    c.ServerLogo,
 				ServerName:    c.Servername,
 				ServerURL:     urlUtil.TrimURL(c.Serverurl),
+				BannerContent: c.BannerContent,
+				SidebarText:   c.SidebarText,
 				AllowRegister: c.AllowRegister,
 				DefaultLocale: string(commonModel.DefaultLocale),
 				ICPNumber:     c.Icpnumber,
@@ -39,7 +41,6 @@ var (
 				MetingAPI:     urlUtil.TrimURL(c.MetingAPI),
 				CustomCSS:     c.CustomCSS,
 				CustomJS:      c.CustomJS,
-				BannerContent: "",
 			}
 		},
 		Normalize: func(s *settingModel.SystemSetting) {

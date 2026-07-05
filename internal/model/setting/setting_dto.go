@@ -10,6 +10,8 @@ type SystemSettingDto struct {
 	ServerLogoFileID string `json:"server_logo_file_id"` // 服务器Logo文件ID（用于确认临时文件）
 	ServerName       string `json:"server_name"`         // 服务器名称
 	ServerURL        string `json:"server_url"`          // 服务器地址
+	BannerContent    string `json:"banner_content"`      // 自定义公告栏（只支持纯文本，为空则隐藏公告栏）
+	SidebarText      string `json:"sidebar_text"`        // 自定义侧栏文本（支持 HTML）
 	AllowRegister    bool   `json:"allow_register"`      // 是否允许注册
 	DefaultLocale    string `json:"default_locale"`      // 站点默认语言（如 zh-CN / en-US）
 	ICPNumber        string `json:"ICP_number"`          // 备案号
@@ -18,7 +20,6 @@ type SystemSettingDto struct {
 	MetingAPI        string `json:"meting_api"`          // Meting API 地址
 	CustomCSS        string `json:"custom_css"`          // 自定义 CSS
 	CustomJS         string `json:"custom_js"`           // 自定义 JS
-	BannerContent    string `json:"banner_content"`      // 自定义公告栏（支持 HTML/MD，为空则不显示公告栏）
 }
 
 type S3SettingDto struct {

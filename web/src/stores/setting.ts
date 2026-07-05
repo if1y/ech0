@@ -35,6 +35,8 @@ export const useSettingStore = defineStore('settingStore', () => {
     server_logo_file_id: '',
     server_name: import.meta.env.VITE_APP_NAME,
     server_url: '',
+    banner_content: '',
+    sidebar_text: '',
     allow_register: true,
     default_locale: 'zh-CN',
     ICP_number: '',
@@ -43,7 +45,6 @@ export const useSettingStore = defineStore('settingStore', () => {
     meting_api: '',
     custom_css: '',
     custom_js: '',
-    banner_content: '',
   })
   const S3Setting = ref<App.Api.Setting.S3Setting>({
     enable: false,

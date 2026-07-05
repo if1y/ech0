@@ -53,6 +53,11 @@
               @open-palette="paletteOpen = true"
               @open-chat="chatLauncherOpen = true"
             />
+            <span
+              v-if="settingStore.SystemSetting.sidebar_text"
+              class="home-aside__custom-text"
+              v-html="settingStore.SystemSetting.sidebar_text"
+            />
           </div>
         </aside>
       </div>
@@ -330,6 +335,19 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.home-aside__custom-text {
+  display: inline-block;
+  margin: 0;
+  margin-top: 0.5rem;
+  padding-inline: 0.5rem;
+  font-family: var(--font-family-display);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
 }
 
 .home-content-block {

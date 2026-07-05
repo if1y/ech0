@@ -12,6 +12,8 @@ declare namespace App {
         server_logo_file_id?: string
         server_name: string
         server_url: string
+        banner_content: string
+        sidebar_text: string
         allow_register: boolean
         default_locale: string
         ICP_number: string
@@ -20,7 +22,6 @@ declare namespace App {
         meting_api: string
         custom_css: string
         custom_js: string
-        banner_content: string
       }
 
       type S3Setting = {
