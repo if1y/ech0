@@ -152,11 +152,6 @@
           <BaseButton :icon="Logout" @click="handleLogout" :class="getBottomButtonClasses()">
             {{ t('panelPage.logout') }}
           </BaseButton>
-
-          <!-- 登录 / 注册 -->
-          <BaseButton :icon="Auth" @click="router.push('/auth')" :class="getBottomButtonClasses()">
-            {{ t('panelPage.login') }}
-          </BaseButton>
         </div>
 
         <!-- 路由内容 -->
