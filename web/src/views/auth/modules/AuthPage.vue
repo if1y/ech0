@@ -9,13 +9,14 @@
         Ech0
       </h1>
       <!-- 登录  -->
-      <div v-if="AuthMode === 'login'">
+      <form v-if="AuthMode === 'login'" @submit.prevent="handleLogin">
         <!-- 模式切换 -->
         <div class="flex items-center justify-between gap-3 mb-3">
           <h2 class="text-lg font-bold text-[var(--color-text-muted)] leading-tight">
             {{ t('authPage.login') }}
           </h2>
           <button
+            type="button"
             @click="AuthMode = 'register'"
             class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition duration-200 whitespace-nowrap flex-shrink-0"
           >
@@ -74,18 +75,19 @@
             />
           </div>
           <!-- 账号密码登录 -->
-          <BaseButton @click="handleLogin" class="min-w-fit px-3 h-9 rounded-md ml-1 flex-shrink-0">
+          <BaseButton type="submit" class="min-w-fit px-3 h-9 rounded-md ml-1 flex-shrink-0">
             <span class="text-[var(--color-text-secondary)]">{{ t('authPage.login') }}</span>
           </BaseButton>
         </div>
-      </div>
+      </form>
       <!-- 注册 -->
-      <div v-else-if="AuthMode === 'register'">
+      <form v-else-if="AuthMode === 'register'" @submit.prevent="handleRegister">
         <div class="flex items-center justify-between gap-3 mb-3">
           <h2 class="text-lg font-bold text-[var(--color-text-muted)] leading-tight">
             {{ t('authPage.register') }}
           </h2>
           <button
+            type="button"
             @click="AuthMode = 'login'"
             class="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition duration-200 whitespace-nowrap flex-shrink-0"
           >
@@ -114,11 +116,11 @@
             :icon="Home"
             class="rounded-md w-9 h-9"
           />
-          <BaseButton @click="handleRegister" class="rounded-md min-w-fit px-3">
+          <BaseButton type="submit" class="rounded-md min-w-fit px-3">
             <span class="text-[var(--color-text-secondary)]">{{ t('authPage.register') }}</span>
           </BaseButton>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </template>
