@@ -280,6 +280,8 @@ func defaultConfig() *AppConfig {
 			ServerLogo:    "/Ech0.svg",
 			Servername:    "Ech0",
 			Serverurl:     "https://ech0.example.com",
+			BannerContent: "",
+			SidebarText:   "",
 			AllowRegister: true,
 			Icpnumber:     "",
 			FooterContent: "",
@@ -287,7 +289,6 @@ func defaultConfig() *AppConfig {
 			MetingAPI:     "",
 			CustomCSS:     "",
 			CustomJS:      "",
-			SidebarText:   "",
 		},
 		Comment: CommentConfig{
 			EnableComment:         false,
