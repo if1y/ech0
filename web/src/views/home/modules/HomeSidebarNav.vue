@@ -101,7 +101,6 @@ const items = [
     labelKey: 'homeSidebar.home',
     kind: 'homeTab',
   },
-  { id: 'panel', to: { name: 'panel' }, labelKey: 'homeSidebar.panel', kind: 'route' },
   {
     id: 'publish',
     to: { name: 'home', query: { tab: 'publish' } },
@@ -130,7 +129,7 @@ const items = [
 
 const visibleItems = computed(() =>
   items.filter((item) => {
-    if (item.id === 'publish' || item.id === 'panel') return isLogin.value
+    if (item.id === 'publish') return isLogin.value
     return true
   }),
 )
