@@ -161,6 +161,7 @@ import ExitUpdate from '@/components/icons/exitupdate.vue'
 import Back from '@/components/icons/back.vue'
 import Info from '@/components/icons/info.vue'
 import Write from '@/components/icons/write.vue'
+import DateIcon from '@/components/icons/date-icon.vue'
 import Music from '@/components/icons/music.vue'
 import Video from '@/components/icons/video.vue'
 import GithubProj from '@/components/icons/githubproj.vue'
@@ -191,6 +192,7 @@ const {
   hasExtension,
   extensionToAdd,
   isSubmitting,
+  customCreatedAt,
 } = storeToRefs(editorStore)
 const echoStore = useEchoStore()
 const { tagOptions } = storeToRefs(echoStore)
@@ -227,6 +229,9 @@ const infoTooltipLines = computed<TooltipLine[]>(() => {
           ? extMap[extType as ExtensionType].icon
           : undefined,
     })
+  if (customCreatedAt.value.trim()) {
+    parts.push({ label: String(t('editor.extTime')), icon: DateIcon })
+  }
 
   return parts
 })

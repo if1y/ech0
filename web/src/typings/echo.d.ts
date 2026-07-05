@@ -122,6 +122,8 @@ declare namespace App {
         layout?: string | null
         extension?: EchoExtension | null
         private: boolean
+        /** 用户发布的「目标时间」，格式 YYYY-MM-DD HH:mm / YYYY-MM-DDTHH:mm，内部转为 Unix 秒发送。为空/null 表示使用服务器当前时间。 */
+        created_at?: number | null
       }
 
       type EchoToUpdate = {

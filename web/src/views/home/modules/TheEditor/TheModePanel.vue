@@ -52,6 +52,22 @@
         />
       </div>
     </div>
+    <!-- 自定义发表时间 -->
+    <div>
+      <h2 class="text-[var(--color-text-muted)] font-bold mb-1">{{ t('editor.customCreatedAt') }}</h2>
+      <p class="text-xs text-[var(--color-text-muted)] mb-1">{{ t('editor.customCreatedAtFormat') }}</p>
+      <input
+        v-model="editorStore.customCreatedAt"
+        type="text"
+        :placeholder="t('editor.customCreatedAtPlaceholder')"
+        :class="[
+          'w-full px-2 py-1 text-sm bg-[var(--md-editor-mini-btn-bg)] border rounded-xs outline-none transition-colors',
+          editorStore.isCustomCreatedAtValid
+            ? 'border-[var(--md-editor-mini-border)] focus:border-[var(--color-primary)]'
+            : 'border-red-500 focus:border-red-500',
+        ]"
+      />
+    </div>
   </div>
 </template>
 
