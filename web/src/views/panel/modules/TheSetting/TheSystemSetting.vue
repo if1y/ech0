@@ -140,9 +140,7 @@
         />
       </div>
       <!-- 自定义侧栏文本 -->
-      <div
-        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"
-      >
+      <div class="flex flex-row justify-start text-[var(--color-text-secondary)] gap-2 mb-1">
         <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
           {{ t('systemSetting.sidebarText') }}:
         </h2>
@@ -156,7 +154,7 @@
             SystemSetting.sidebar_text.length === 0 ? t('commonUi.none') : SystemSetting.sidebar_text
           }}
         </span>
-        <BaseInput
+        <BaseTextArea
           v-else
           v-model="SystemSetting.sidebar_text"
           type="text"
