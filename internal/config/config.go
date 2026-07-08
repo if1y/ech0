@@ -210,7 +210,7 @@ func defaultConfig() *AppConfig {
 	return &AppConfig{
 		Server: ServerConfig{
 			Port: "6277",
-			Host: "0.0.0.0",
+			Host: "127.0.0.1",
 			Mode: "release",
 		},
 		OpenAPI: OpenAPIConfig{
