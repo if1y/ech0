@@ -50,15 +50,16 @@ func (s *Server) Start(context.Context) error {
 		return errors.New("http server already started")
 	}
 
-	port := config.Config().Server.Port
-	PrintGreetings(port)
+	cfg := config.Config().Server
+	addr := cfg.Host + ":" + cfg.Port
+	PrintGreetings(cfg.Port)
 
 	s.httpServer = &http.Server{
-		Addr:    ":" + port,
+		Addr:    addr,
 		Handler: s.GinEngine,
 	}
 
-	listener, err := net.Listen("tcp", s.httpServer.Addr)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
