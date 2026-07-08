@@ -198,7 +198,7 @@ func defaultConfig() *AppConfig {
 	return &AppConfig{
 		Server: ServerConfig{
 			Port: "6277",
-			Host: "127.0.0.1",
+			Host: "0.0.0.0",
 			Mode: "release",
 		},
 		Database: DatabaseConfig{
