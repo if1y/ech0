@@ -27,6 +27,33 @@ func TestMD5Encrypt(t *testing.T) {
 	}
 }
 
+func TestHashPassword_RoundTrip(t *testing.T) {
+	const plain = "s3cr3t-pw"
+	hash, err := HashPassword(plain)
+	require.NoError(t, err)
+	// bcrypt 自描述哈希串，带随机盐：以 $2 开头，且两次哈希不相等。
+	assert.True(t, strings.HasPrefix(hash, "$2"), "want bcrypt hash, got %q", hash)
+	other, err := HashPassword(plain)
+	require.NoError(t, err)
+	assert.NotEqual(t, hash, other, "bcrypt 每次应产生不同盐")
+
+	// 以 bcrypt 算法校验：正确口令通过，错误口令拒绝。
+	assert.True(t, CheckPassword(AlgoBcrypt, hash, plain))
+	assert.False(t, CheckPassword(AlgoBcrypt, hash, "wrong-pw"))
+}
+
+func TestCheckPassword_LegacyMD5(t *testing.T) {
+	const plain = "old-pw"
+	md5Hash := MD5Encrypt(plain)
+
+	// 存量 md5 算法：正确口令通过，错误口令拒绝。
+	assert.True(t, CheckPassword(AlgoMD5, md5Hash, plain))
+	assert.False(t, CheckPassword(AlgoMD5, md5Hash, "nope"))
+
+	// 空算法（历史未标记）应退化为 md5 比对，保证老数据仍可登录。
+	assert.True(t, CheckPassword("", md5Hash, plain))
+}
+
 func TestGenerateRandomString_Length(t *testing.T) {
 	for _, n := range []int{1, 8, 16, 32, 64, 256} {
 		got := GenerateRandomString(n)

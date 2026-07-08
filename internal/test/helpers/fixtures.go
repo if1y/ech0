@@ -13,7 +13,6 @@ func NewUser(opts ...func(*userModel.User)) userModel.User {
 	u := userModel.User{
 		ID:       "user-test-0001",
 		Username: "tester",
-		Password: "hashed-password",
 	}
 	for _, o := range opts {
 		o(&u)

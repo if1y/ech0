@@ -5,13 +5,60 @@ package service
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	echoModel "github.com/lin-snow/ech0/internal/model/echo"
+	embeddingModel "github.com/lin-snow/ech0/internal/model/embedding"
 	fileModel "github.com/lin-snow/ech0/internal/model/file"
 	settingModel "github.com/lin-snow/ech0/internal/model/setting"
 	"github.com/lin-snow/ech0/internal/storage"
 )
+
+// enrichEchoSvc 是 EchoService 的测试替身，只覆写 GetEchoById 返回带指定附件的 Echo，
+// 其余方法未实现（嵌入 nil 接口，未调用即不 panic）。enrichHits 只用到 GetEchoById。
+type enrichEchoSvc struct {
+	EchoService
+	echo *echoModel.Echo
+}
+
+func (f *enrichEchoSvc) GetEchoById(_ context.Context, _ string) (*echoModel.Echo, error) {
+	return f.echo, nil
+}
+
+// enrichHits：命中回查时图片/视频/音频都进 results.Files（供前端展示），pdf/file 等非媒体排除；
+// 多模态关闭时不产出 base64 图片。锁住「sources 带媒体类型标志、但不把非媒体塞给前端」的契约。
+func TestEnrichHits_MediaCategoriesToFiles(t *testing.T) {
+	echoFile := func(cat string) fileModel.EchoFile {
+		return fileModel.EchoFile{File: fileModel.File{Category: cat, URL: "https://f/" + cat}}
+	}
+	svc := &enrichEchoSvc{echo: &echoModel.Echo{
+		ID: "e1",
+		EchoFiles: []fileModel.EchoFile{
+			echoFile(string(storage.CategoryImage)),
+			echoFile(string(storage.CategoryVideo)),
+			echoFile(string(storage.CategoryAudio)),
+			echoFile(string(storage.CategoryPDF)),
+			echoFile(string(storage.CategoryFile)),
+		},
+	}}
+	s := &CopilotService{echoService: svc}
+
+	results := []embeddingModel.SearchResult{{EchoID: "e1"}}
+	_, images := s.enrichHits(context.Background(), results, false)
+
+	gotCats := make([]string, 0, len(results[0].Files))
+	for _, f := range results[0].Files {
+		gotCats = append(gotCats, f.Category)
+	}
+	want := []string{"image", "video", "audio"}
+	if !reflect.DeepEqual(gotCats, want) {
+		t.Fatalf("Files 类别 = %v, want %v（应带图片/视频/音频，排除 pdf/file）", gotCats, want)
+	}
+	if len(images) != 0 {
+		t.Fatalf("多模态关闭时不应产出 base64 图片，got %d", len(images))
+	}
+}
 
 // formatExtension：覆盖各扩展类型的渲染分支与缺字段/空值降级。
 func TestFormatExtension(t *testing.T) {

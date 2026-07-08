@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 
 	authModel "github.com/lin-snow/ech0/internal/model/auth"
@@ -152,18 +153,25 @@ func TestInitOwner_Success(t *testing.T) {
 
 	var created userModel.User
 	m.repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, u *userModel.User) { created = *u }).
+		Run(func(_ context.Context, u *userModel.User) { u.ID = "owner-id"; created = *u }).
+		Return(nil).Once()
+	var localAuth userModel.UserLocalAuth
+	m.repo.EXPECT().UpsertLocalAuth(mock.Anything, mock.Anything).
+		Run(func(_ context.Context, la *userModel.UserLocalAuth) { localAuth = *la }).
 		Return(nil).Once()
 	m.repo.EXPECT().MarkInitialized(mock.Anything).Return(nil).Once()
 
 	err := svc.InitOwner(&authModel.RegisterDto{Username: "owner", Password: "secret", Email: " owner@ech0.com "})
 	require.NoError(t, err)
 
-	// 首位用户必须被提权为 Owner+Admin，密码经 MD5 落库，邮箱被 trim。
+	// 首位用户必须被提权为 Owner+Admin，邮箱被 trim。
 	assert.True(t, created.IsOwner, "first user must be owner")
 	assert.True(t, created.IsAdmin, "owner must be admin")
-	assert.Equal(t, cryptoUtil.MD5Encrypt("secret"), created.Password)
 	assert.Equal(t, "owner@ech0.com", created.Email)
+	// 密码以 bcrypt 存入 user_local_auth，并绑定到新建 owner 的 ID。
+	assert.Equal(t, "owner-id", localAuth.UserID)
+	assert.Equal(t, cryptoUtil.AlgoBcrypt, localAuth.PasswordAlgo)
+	assert.True(t, cryptoUtil.CheckPassword(localAuth.PasswordAlgo, localAuth.PasswordHash, "secret"))
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +249,11 @@ func TestRegister_Success(t *testing.T) {
 
 	var created userModel.User
 	m.repo.EXPECT().CreateUser(mock.Anything, mock.Anything).
-		Run(func(_ context.Context, u *userModel.User) { created = *u }).
+		Run(func(_ context.Context, u *userModel.User) { u.ID = "newbie-id"; created = *u }).
+		Return(nil).Once()
+	var localAuth userModel.UserLocalAuth
+	m.repo.EXPECT().UpsertLocalAuth(mock.Anything, mock.Anything).
+		Run(func(_ context.Context, la *userModel.UserLocalAuth) { localAuth = *la }).
 		Return(nil).Once()
 
 	err := svc.Register(&authModel.RegisterDto{Username: "newbie", Password: "pw"})
@@ -250,7 +262,32 @@ func TestRegister_Success(t *testing.T) {
 	// 普通注册用户绝不能携带管理员/站长身份（提权守卫）。
 	assert.False(t, created.IsAdmin, "registered user must not be admin")
 	assert.False(t, created.IsOwner, "registered user must not be owner")
-	assert.Equal(t, cryptoUtil.MD5Encrypt("pw"), created.Password)
+	// 密码以 bcrypt 存入 user_local_auth。
+	assert.Equal(t, "newbie-id", localAuth.UserID)
+	assert.Equal(t, cryptoUtil.AlgoBcrypt, localAuth.PasswordAlgo)
+	assert.True(t, cryptoUtil.CheckPassword(localAuth.PasswordAlgo, localAuth.PasswordHash, "pw"))
+}
+
+func TestRegister_PasswordTooLong(t *testing.T) {
+	svc, m := newUserSvc(t)
+	m.repo.EXPECT().IsInitialized(mock.Anything).Return(true, nil).Once()
+	m.repo.EXPECT().GetAllUsers(mock.Anything).Return(nil, nil).Once()
+	// 超过 bcrypt 72 字节上限应在哈希/建号前被拦下（GetUserByUsername/CreateUser 都不应被触达）。
+
+	longPw := strings.Repeat("a", cryptoUtil.MaxPasswordBytes+1)
+	err := svc.Register(&authModel.RegisterDto{Username: "u", Password: longPw})
+	require.EqualError(t, err, commonModel.PASSWORD_TOO_LONG)
+}
+
+func TestUpdateUser_PasswordTooLong(t *testing.T) {
+	svc, m := newUserSvc(t)
+	// 操作者为 admin，改自己的资料；超长密码应在写库前被拒。
+	m.repo.EXPECT().GetUserByID(mock.Anything, "admin-1").
+		Return(helpers.NewUser(withID("admin-1"), helpers.AsAdmin), nil).Once()
+
+	longPw := strings.Repeat("a", cryptoUtil.MaxPasswordBytes+1)
+	err := svc.UpdateUser(helpers.CtxAsUser("admin-1"), userModel.UserInfoDto{Password: longPw})
+	require.EqualError(t, err, commonModel.PASSWORD_TOO_LONG)
 }
 
 // ---------------------------------------------------------------------------
@@ -414,15 +451,12 @@ func TestGetAllUsers_NotAdmin(t *testing.T) {
 	assert.Nil(t, got)
 }
 
-func TestGetAllUsers_StripsOwnerAndPasswords(t *testing.T) {
+func TestGetAllUsers_StripsOwner(t *testing.T) {
 	svc, m := newUserSvc(t)
 
 	owner := helpers.NewUser(withID("owner-1"), helpers.AsOwner)
-	owner.Password = "owner-secret"
 	admin := helpers.NewUser(withID("admin-1"), helpers.AsAdmin)
-	admin.Password = "admin-secret"
 	normal := helpers.NewUser(withID("u-2"))
-	normal.Password = "user-secret"
 
 	// 调用者为 admin。
 	m.repo.EXPECT().GetUserByID(mock.Anything, "admin-1").Return(admin, nil).Once()
@@ -436,7 +470,6 @@ func TestGetAllUsers_StripsOwnerAndPasswords(t *testing.T) {
 	require.Len(t, got, 2, "owner 必须被剔除")
 	for _, u := range got {
 		assert.NotEqual(t, owner.ID, u.ID, "结果中不应出现 owner")
-		assert.Empty(t, u.Password, "密码必须被剥离")
 	}
 }
 

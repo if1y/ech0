@@ -45,7 +45,7 @@ func seedUser(t *testing.T, db *gorm.DB, u userModel.User) userModel.User {
 func TestUserRepository_UpdateUser_CacheCoordination(t *testing.T) {
 	t.Run("rename deletes the old username key and sets the new one", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "old", Password: "p"})
+		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "old"})
 		c.Set(GetUsernameKey("old"), existing, 1)
 
 		updated := existing
@@ -70,7 +70,7 @@ func TestUserRepository_UpdateUser_CacheCoordination(t *testing.T) {
 
 	t.Run("admin downgrade deletes the admin key", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "a", Password: "p", IsAdmin: true})
+		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "a", IsAdmin: true})
 		c.Set(GetAdminKey("u1"), existing, 1)
 
 		updated := existing
@@ -87,7 +87,7 @@ func TestUserRepository_UpdateUser_CacheCoordination(t *testing.T) {
 
 	t.Run("owner downgrade deletes the owner key", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "o", Password: "p", IsAdmin: true, IsOwner: true})
+		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "o", IsAdmin: true, IsOwner: true})
 		c.Set(GetOwnerKey(), existing, 1)
 
 		updated := existing
@@ -100,7 +100,7 @@ func TestUserRepository_UpdateUser_CacheCoordination(t *testing.T) {
 
 	t.Run("promotion to admin and owner sets id/username/admin/owner keys", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "x", Password: "p"})
+		existing := seedUser(t, db, userModel.User{ID: "u1", Username: "x"})
 
 		updated := existing
 		updated.IsAdmin = true
@@ -127,7 +127,7 @@ func TestUserRepository_UpdateUser_CacheCoordination(t *testing.T) {
 	t.Run("updating a missing user errors and writes no cache", func(t *testing.T) {
 		repo, _, c := newUserRepo(t)
 
-		missing := userModel.User{ID: "ghost", Username: "ghost", Password: "p"}
+		missing := userModel.User{ID: "ghost", Username: "ghost"}
 		err := repo.UpdateUser(context.Background(), &missing)
 		require.ErrorIs(t, err, gorm.ErrRecordNotFound)
 
@@ -140,7 +140,7 @@ func TestUserRepository_CreateUser_KeyFanout(t *testing.T) {
 	t.Run("non-owner sets only id and username keys", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
 
-		user := userModel.User{ID: "u1", Username: "alice", Password: "p", IsAdmin: true}
+		user := userModel.User{ID: "u1", Username: "alice", IsAdmin: true}
 		require.NoError(t, repo.CreateUser(context.Background(), &user))
 
 		gotID, ok := cacheGetUser(t, c, GetUserIDKey("u1"))
@@ -164,7 +164,7 @@ func TestUserRepository_CreateUser_KeyFanout(t *testing.T) {
 	t.Run("owner also sets the owner key", func(t *testing.T) {
 		repo, _, c := newUserRepo(t)
 
-		user := userModel.User{ID: "u1", Username: "boss", Password: "p", IsAdmin: true, IsOwner: true}
+		user := userModel.User{ID: "u1", Username: "boss", IsAdmin: true, IsOwner: true}
 		require.NoError(t, repo.CreateUser(context.Background(), &user))
 
 		gotOwner, ok := cacheGetUser(t, c, GetOwnerKey())
@@ -181,7 +181,7 @@ func TestUserRepository_CreateUser_KeyFanout(t *testing.T) {
 func TestUserRepository_DeleteUser_KeyFanout(t *testing.T) {
 	t.Run("admin owner deletes id/username/admin/owner keys", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		u := seedUser(t, db, userModel.User{ID: "u1", Username: "boss", Password: "p", IsAdmin: true, IsOwner: true})
+		u := seedUser(t, db, userModel.User{ID: "u1", Username: "boss", IsAdmin: true, IsOwner: true})
 		c.Set(GetUserIDKey("u1"), u, 1)
 		c.Set(GetUsernameKey("boss"), u, 1)
 		c.Set(GetAdminKey("u1"), u, 1)
@@ -201,7 +201,7 @@ func TestUserRepository_DeleteUser_KeyFanout(t *testing.T) {
 
 	t.Run("regular user deletes only id/username keys and leaves admin/owner keys", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		u := seedUser(t, db, userModel.User{ID: "u1", Username: "bob", Password: "p"})
+		u := seedUser(t, db, userModel.User{ID: "u1", Username: "bob"})
 		c.Set(GetUserIDKey("u1"), u, 1)
 		c.Set(GetUsernameKey("bob"), u, 1)
 		// 这两个键不属于该用户的清理范围，必须保留。
@@ -267,8 +267,8 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 
 	t.Run("returns every inserted user", func(t *testing.T) {
 		repo, db, _ := newUserRepo(t)
-		seedUser(t, db, userModel.User{ID: "u1", Username: "a", Password: "p"})
-		seedUser(t, db, userModel.User{ID: "u2", Username: "b", Password: "p"})
+		seedUser(t, db, userModel.User{ID: "u1", Username: "a"})
+		seedUser(t, db, userModel.User{ID: "u2", Username: "b"})
 
 		got, err := repo.GetAllUsers(context.Background())
 		require.NoError(t, err)
@@ -298,7 +298,7 @@ func TestUserRepository_GetUserByID_ReadThrough(t *testing.T) {
 
 	t.Run("cache miss reads db and backfills", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "dbuser", Password: "p"})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "dbuser"})
 
 		got, err := repo.GetUserByID(context.Background(), "u1")
 		require.NoError(t, err)
@@ -311,7 +311,7 @@ func TestUserRepository_GetUserByID_ReadThrough(t *testing.T) {
 
 	t.Run("transaction context bypasses cache", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "dbuser", Password: "p"})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "dbuser"})
 		stale := userModel.User{ID: "u1", Username: "stale"}
 		c.Set(GetUserIDKey("u1"), stale, 1)
 
@@ -345,7 +345,7 @@ func TestUserRepository_GetUserByUsername_ReadThrough(t *testing.T) {
 
 	t.Run("cache miss reads db and backfills", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "alice", Password: "p"})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "alice"})
 
 		got, err := repo.GetUserByUsername(context.Background(), "alice")
 		require.NoError(t, err)
@@ -358,7 +358,7 @@ func TestUserRepository_GetUserByUsername_ReadThrough(t *testing.T) {
 
 	t.Run("transaction context bypasses cache", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "alice", Password: "p"})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "alice"})
 		stale := userModel.User{ID: "u9", Username: "alice"}
 		c.Set(GetUsernameKey("alice"), stale, 1)
 
@@ -393,8 +393,8 @@ func TestUserRepository_GetOwner_ReadThrough(t *testing.T) {
 	t.Run("cache miss reads db and backfills", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
 		// 写一个非站长用户，确保查询条件 is_owner=true 命中的是正确那条。
-		seedUser(t, db, userModel.User{ID: "u2", Username: "plain", Password: "p"})
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "owner", Password: "p", IsAdmin: true, IsOwner: true})
+		seedUser(t, db, userModel.User{ID: "u2", Username: "plain"})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "owner", IsAdmin: true, IsOwner: true})
 
 		got, err := repo.GetOwner(context.Background())
 		require.NoError(t, err)
@@ -407,7 +407,7 @@ func TestUserRepository_GetOwner_ReadThrough(t *testing.T) {
 
 	t.Run("transaction context bypasses cache", func(t *testing.T) {
 		repo, db, c := newUserRepo(t)
-		want := seedUser(t, db, userModel.User{ID: "u1", Username: "owner", Password: "p", IsAdmin: true, IsOwner: true})
+		want := seedUser(t, db, userModel.User{ID: "u1", Username: "owner", IsAdmin: true, IsOwner: true})
 		stale := userModel.User{ID: "u9", Username: "stale-owner", IsOwner: true}
 		c.Set(GetOwnerKey(), stale, 1)
 

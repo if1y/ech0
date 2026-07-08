@@ -95,6 +95,27 @@ func (authRepository *AuthRepository) GetUserByUsername(ctx context.Context, use
 	return user, nil
 }
 
+// GetLocalAuthByUserID 读取用户的本地密码认证行（user_local_auth）。
+// 无行（gorm.ErrRecordNotFound）表示该账号未设本地密码，调用方应按凭证错误处理。
+func (authRepository *AuthRepository) GetLocalAuthByUserID(ctx context.Context, userID string) (model.UserLocalAuth, error) {
+	var localAuth model.UserLocalAuth
+	if err := authRepository.getDB(ctx).Where("user_id = ?", userID).First(&localAuth).Error; err != nil {
+		return model.UserLocalAuth{}, err
+	}
+	return localAuth, nil
+}
+
+// UpdateLocalAuthPassword 更新用户本地密码认证行的哈希与算法，供登录时惰性升级（md5 → bcrypt）使用。
+func (authRepository *AuthRepository) UpdateLocalAuthPassword(ctx context.Context, userID, passwordHash, passwordAlgo string) error {
+	return authRepository.getDB(ctx).
+		Model(&model.UserLocalAuth{}).
+		Where("user_id = ?", userID).
+		Updates(map[string]any{
+			"password_hash": passwordHash,
+			"password_algo": passwordAlgo,
+		}).Error
+}
+
 func (authRepository *AuthRepository) getUserByID(ctx context.Context, id string) (model.User, error) {
 	var user model.User
 	if err := authRepository.getDB(ctx).Where("id = ?", id).First(&user).Error; err != nil {

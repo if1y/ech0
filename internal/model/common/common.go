@@ -109,6 +109,10 @@ const (
 	AgentProtocolCollapsedKey = "agent_provider_collapsed_v1"
 	// AgentSettingProtocolRenamedKey 是把 agent_setting JSON 里 "provider" 字段重命名为 "protocol" 的幂等标记键
 	AgentSettingProtocolRenamedKey = "agent_setting_protocol_renamed_v1"
+	// UserLocalAuthBackfilledKey 是把存量 users.password 回填进 user_local_auth 表的幂等标记键
+	UserLocalAuthBackfilledKey = "user_local_auth_backfilled_v1"
+	// UsersPasswordColumnDroppedKey 是回填后删除 users.password 遗留列的幂等标记键
+	UsersPasswordColumnDroppedKey = "users_password_column_dropped_v1"
 	// ChatSessionKeyPrefix 是 Chat 持久化会话的键前缀（每个 userID 一条，键为前缀 + userID）
 	ChatSessionKeyPrefix = "chat_session:"
 )

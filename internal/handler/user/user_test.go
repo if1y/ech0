@@ -168,12 +168,12 @@ func TestUserHandler_DeleteUser(t *testing.T) {
 }
 
 func TestUserHandler_GetUserInfo(t *testing.T) {
-	t.Run("success scrubs password and resolves viewer id", func(t *testing.T) {
+	t.Run("success resolves viewer id", func(t *testing.T) {
 		svc := usermock.NewMockService(t)
-		// 服务层返回带密码哈希的用户；handler 必须把 Password 脱敏为空。
+		// 用户实体已不含密码字段（密码存于 user_local_auth），handler 直接返回用户信息。
 		svc.EXPECT().
 			GetUserByID("viewer-1").
-			Return(userModel.User{ID: "viewer-1", Username: "alice", Password: "secret-hash"}, nil).
+			Return(userModel.User{ID: "viewer-1", Username: "alice"}, nil).
 			Once()
 
 		h := userHandler.NewUserHandler(svc)
@@ -182,7 +182,6 @@ func TestUserHandler_GetUserInfo(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, commonModel.GET_USER_INFO_SUCCESS, out.Message)
 		assert.Equal(t, "alice", out.Data.Username)
-		assert.Empty(t, out.Data.Password, "password 必须脱敏")
 	})
 
 	t.Run("error", func(t *testing.T) {

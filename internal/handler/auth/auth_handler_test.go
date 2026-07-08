@@ -132,7 +132,6 @@ func (f *fakeUserService) DeleteUser(context.Context, string) error {
 var testUser = userModel.User{
 	ID:       "test-user-id-001",
 	Username: "testuser",
-	Password: "hashed",
 }
 
 func init() {

@@ -31,8 +31,9 @@ func (EchoEmbedding) TableName() string { return "echo_embeddings" }
 
 // SearchResult 是一次向量检索命中的结果（含内容快照与距离）。
 //
-// Files / Extension 是命中 Echo 的图片附件与扩展分享，仅在检索命中后回查填充（见 copilot.enrichHits），
-// 用于前端在引用来源里展示缩略图与扩展类型标签——只随 SSE/会话给前端，不进向量索引、也不喂模型。
+// Files / Extension 是命中 Echo 的媒体附件（图片/视频/音频）与扩展分享，仅在检索命中后回查填充
+// （见 copilot.enrichHits），用于前端在引用来源里展示缩略图与类型标志——只随 SSE/会话给前端，
+// 不进向量索引、也不喂模型。
 type SearchResult struct {
 	EchoID      string                   `json:"echo_id"`
 	Content     string                   `json:"content"`

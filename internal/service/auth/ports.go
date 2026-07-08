@@ -40,6 +40,12 @@ type UserRepo interface {
 	GetUserByUsername(ctx context.Context, username string) (model.User, error)
 }
 
+// LocalAuthRepo 负责本地密码认证行（user_local_auth）的读取与惰性升级写入。
+type LocalAuthRepo interface {
+	GetLocalAuthByUserID(ctx context.Context, userID string) (model.UserLocalAuth, error)
+	UpdateLocalAuthPassword(ctx context.Context, userID, passwordHash, passwordAlgo string) error
+}
+
 type IdentityRepo interface {
 	BindOAuth(ctx context.Context, userID string, provider, oauthID, issuer, authType string) error
 	GetUserByOAuthID(ctx context.Context, provider, oauthID string) (model.User, error)
@@ -65,6 +71,7 @@ type ChallengeStore interface {
 
 type Repository interface {
 	UserRepo
+	LocalAuthRepo
 	IdentityRepo
 	PasskeyRepo
 	ChallengeStore

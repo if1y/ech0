@@ -31,6 +31,7 @@ type UserRepo interface {
 	CreateUser(ctx context.Context, newUser *model.User) error
 	GetOwner(ctx context.Context) (model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
+	UpsertLocalAuth(ctx context.Context, localAuth *model.UserLocalAuth) error
 	DeleteUser(ctx context.Context, id string) error
 }
 

@@ -35,6 +35,7 @@ import (
 	logUtil "github.com/lin-snow/ech0/pkg/log"
 	"github.com/lin-snow/ech0/pkg/viewer"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 )
 
 // oidcHTTPClient is the shared client for outbound OIDC/OAuth2 requests. It
@@ -97,14 +98,45 @@ func (authService *AuthService) Login(loginDto *authModel.LoginDto) (*authModel.
 		return nil, errors.New(commonModel.USERNAME_OR_PASSWORD_NOT_BE_EMPTY)
 	}
 
-	loginDto.Password = cryptoUtil.MD5Encrypt(loginDto.Password)
-	user, err := authService.repository.GetUserByUsername(context.Background(), loginDto.Username)
+	ctx := context.Background()
+	user, err := authService.repository.GetUserByUsername(ctx, loginDto.Username)
 	if err != nil {
 		return nil, errors.New(commonModel.USER_NOTFOUND)
 	}
-	if user.Password != loginDto.Password {
+
+	localAuth, err := authService.repository.GetLocalAuthByUserID(ctx, user.ID)
+	if err != nil {
+		// 无本地密码认证行（纯外部身份账号）→ 统一按凭证错误处理，不泄露"无本地密码"。
+		// 但真实 DB 故障要留痕：否则瞬时故障会被误显示为"密码错误"，且无从排障。
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logUtil.GetLogger().Warn(
+				"load local auth failed",
+				slog.String("module", "auth"),
+				slog.String("user_id", user.ID),
+				logUtil.Err(err),
+			)
+		}
 		return nil, errors.New(commonModel.PASSWORD_INCORRECT)
 	}
+	if !cryptoUtil.CheckPassword(localAuth.PasswordAlgo, localAuth.PasswordHash, loginDto.Password) {
+		return nil, errors.New(commonModel.PASSWORD_INCORRECT)
+	}
+
+	// 惰性升级：存量非 bcrypt 口令校验通过后，就地换算为 bcrypt 落库。
+	// best-effort —— 升级写失败只告警，绝不阻断这次已认证成功的登录。
+	if localAuth.PasswordAlgo != cryptoUtil.AlgoBcrypt {
+		if newHash, hashErr := cryptoUtil.HashPassword(loginDto.Password); hashErr == nil {
+			if upErr := authService.repository.UpdateLocalAuthPassword(ctx, user.ID, newHash, cryptoUtil.AlgoBcrypt); upErr != nil {
+				logUtil.GetLogger().Warn(
+					"lazy upgrade password hash failed",
+					slog.String("module", "auth"),
+					slog.String("user_id", user.ID),
+					logUtil.Err(upErr),
+				)
+			}
+		}
+	}
+
 	return authService.issueUserToken(user)
 }
 

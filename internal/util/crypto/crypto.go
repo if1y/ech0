@@ -7,14 +7,50 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/hex"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-// MD5Encrypt 对内容进行 MD5 编码
+// 密码哈希算法标识，持久化在 user_local_auth.password_algo 列，登录时据此分派校验。
+const (
+	AlgoMD5    = "md5"    // 历史遗留：裸 MD5 无盐，仅用于存量校验，登录成功后惰性升级为 bcrypt
+	AlgoBcrypt = "bcrypt" // 当前算法：自带盐、自描述哈希串
+)
+
+// MaxPasswordBytes 是 bcrypt 接受的口令字节上限——超过 72 字节 GenerateFromPassword 会返回
+// ErrPasswordTooLong。写入侧据此前置校验，避免把 bcrypt 的裸英文错误抛给用户。
+const MaxPasswordBytes = 72
+
+// MD5Encrypt 对内容进行 MD5 编码。
+//
+// 已废弃用于新密码——仅保留给存量 AlgoMD5 口令的校验（见 CheckPassword）。
 func MD5Encrypt(text string) string {
 	hash := md5.New()
 	hash.Write([]byte(text))
 	hashInBytes := hash.Sum(nil)
 	return hex.EncodeToString(hashInBytes)
+}
+
+// HashPassword 用 bcrypt（默认 cost，自带随机盐）对明文口令做哈希，返回自描述的哈希串。
+// 返回的哈希应连同 AlgoBcrypt 一起持久化到 user_local_auth。
+func HashPassword(plain string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashed), nil
+}
+
+// CheckPassword 校验明文口令是否匹配存储的哈希，按 algo 分派：
+//   - AlgoBcrypt：bcrypt 常数时间比对；
+//   - 其它（AlgoMD5 或空串等存量值）：退化为裸 MD5 等值比对。
+//
+// 校验通过且 algo != AlgoBcrypt 时，调用方应惰性升级为 bcrypt。
+func CheckPassword(algo, storedHash, plain string) bool {
+	if algo == AlgoBcrypt {
+		return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(plain)) == nil
+	}
+	return MD5Encrypt(plain) == storedHash
 }
 
 // randomCharset 是 GenerateRandomString 使用的字符集（62 个字符）。

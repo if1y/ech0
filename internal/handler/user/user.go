@@ -84,7 +84,6 @@ func (userHandler *UserHandler) DeleteUser(ctx context.Context, in *DeleteUserIn
 func (userHandler *UserHandler) GetUserInfo(ctx context.Context, _ *GetUserInfoInput) (UserOutput, error) {
 	userid := viewer.MustFromContext(ctx).UserID()
 	user, err := userHandler.userService.GetUserByID(userid)
-	user.Password = ""
 	if err != nil {
 		return UserOutput{}, err
 	}

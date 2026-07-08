@@ -192,7 +192,6 @@ func (s *FileService) UploadFile(
 		return commonModel.FileDto{}, err
 	}
 
-	user.Password = ""
 	if err := eventbus.Emit(
 		context.Background(),
 		s.bus,

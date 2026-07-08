@@ -57,6 +57,15 @@ func NewUserService(
 	}
 }
 
+// ensurePasswordLength 在写入前拦掉超过 bcrypt 72 字节上限的口令，返回可本地化的业务错误，
+// 避免 bcrypt.GenerateFromPassword 抛出裸英文 ErrPasswordTooLong 直达前端。
+func ensurePasswordLength(password string) error {
+	if len(password) > cryptoUtil.MaxPasswordBytes {
+		return errors.New(commonModel.PASSWORD_TOO_LONG)
+	}
+	return nil
+}
+
 // InitOwner 初始化 Owner 账号
 //
 // 参数:
@@ -81,6 +90,15 @@ func (userService *UserService) InitOwner(registerDto *authModel.RegisterDto) er
 		if resolved := i18nUtil.ResolveLocale(requested); resolved != "" {
 			ownerLocale = resolved
 		}
+	}
+
+	// 对 owner 初始密码做 bcrypt 哈希，落入 user_local_auth。
+	if err := ensurePasswordLength(registerDto.Password); err != nil {
+		return err
+	}
+	passwordHash, err := cryptoUtil.HashPassword(registerDto.Password)
+	if err != nil {
+		return err
 	}
 
 	var owner model.User
@@ -110,13 +128,19 @@ func (userService *UserService) InitOwner(registerDto *authModel.RegisterDto) er
 		owner = model.User{
 			Username: registerDto.Username,
 			Email:    email,
-			Password: cryptoUtil.MD5Encrypt(registerDto.Password),
 			IsAdmin:  true,
 			IsOwner:  true,
 			Locale:   ownerLocale,
 		}
 
 		if err := userService.userRepository.CreateUser(ctx, &owner); err != nil {
+			return err
+		}
+		if err := userService.userRepository.UpsertLocalAuth(ctx, &model.UserLocalAuth{
+			UserID:       owner.ID,
+			PasswordHash: passwordHash,
+			PasswordAlgo: cryptoUtil.AlgoBcrypt,
+		}); err != nil {
 			return err
 		}
 
@@ -126,7 +150,6 @@ func (userService *UserService) InitOwner(registerDto *authModel.RegisterDto) er
 	}
 
 	// 发布用户注册事件（站点默认语言由 InitService 在编排层经 SettingService 落库，不在此处）。
-	owner.Password = "" // 不包含密码信息
 	eventbus.Notify(context.Background(), userService.bus, event.UserCreated{User: owner})
 
 	return nil
@@ -158,8 +181,14 @@ func (userService *UserService) Register(registerDto *authModel.RegisterDto) err
 		return errors.New(commonModel.USER_COUNT_EXCEED_LIMIT)
 	}
 
-	// 将密码进行 MD5 加密
-	registerDto.Password = cryptoUtil.MD5Encrypt(registerDto.Password)
+	// 对密码做 bcrypt 哈希，落入 user_local_auth（不再挂在 User 上）
+	if err := ensurePasswordLength(registerDto.Password); err != nil {
+		return err
+	}
+	passwordHash, err := cryptoUtil.HashPassword(registerDto.Password)
+	if err != nil {
+		return err
+	}
 	email := strings.TrimSpace(registerDto.Email)
 	if email != "" {
 		if _, err := mail.ParseAddress(email); err != nil {
@@ -170,7 +199,6 @@ func (userService *UserService) Register(registerDto *authModel.RegisterDto) err
 	newUser := model.User{
 		Username: registerDto.Username,
 		Email:    email,
-		Password: registerDto.Password,
 		IsAdmin:  false,
 		IsOwner:  false,
 		Locale:   string(commonModel.DefaultLocale),
@@ -194,14 +222,16 @@ func (userService *UserService) Register(registerDto *authModel.RegisterDto) err
 		if err := userService.userRepository.CreateUser(ctx, &newUser); err != nil {
 			return err
 		}
-
-		return nil
+		return userService.userRepository.UpsertLocalAuth(ctx, &model.UserLocalAuth{
+			UserID:       newUser.ID,
+			PasswordHash: passwordHash,
+			PasswordAlgo: cryptoUtil.AlgoBcrypt,
+		})
 	}); err != nil {
 		return err
 	}
 
 	// 发布用户注册事件
-	newUser.Password = "" // 不包含密码信息
 	eventbus.Notify(context.Background(), userService.bus, event.UserCreated{User: newUser})
 
 	return nil
@@ -237,14 +267,17 @@ func (userService *UserService) UpdateUser(ctx context.Context, userdto model.Us
 		user.Username = userdto.Username
 	}
 
-	// 检查是否需要更新密码
-	if userdto.Password != "" && cryptoUtil.MD5Encrypt(userdto.Password) != user.Password {
-		// 检查密码是否为空
-		if userdto.Password == "" {
-			return errors.New(commonModel.USERNAME_OR_PASSWORD_NOT_BE_EMPTY)
+	// 检查是否需要更新密码（改密写入 user_local_auth，不再挂在 User 上）
+	var newPasswordHash string
+	if userdto.Password != "" {
+		if err := ensurePasswordLength(userdto.Password); err != nil {
+			return err
 		}
-		// 更新密码
-		user.Password = cryptoUtil.MD5Encrypt(userdto.Password)
+		hashed, err := cryptoUtil.HashPassword(userdto.Password)
+		if err != nil {
+			return err
+		}
+		newPasswordHash = hashed
 	}
 
 	avatarChanged := false
@@ -265,7 +298,18 @@ func (userService *UserService) UpdateUser(ctx context.Context, userdto model.Us
 	}
 	if err := userService.transactor.Run(ctx, func(txCtx context.Context) error {
 		// 更新用户信息
-		return userService.userRepository.UpdateUser(txCtx, &user)
+		if err := userService.userRepository.UpdateUser(txCtx, &user); err != nil {
+			return err
+		}
+		// 如有改密，写入 user_local_auth
+		if newPasswordHash != "" {
+			return userService.userRepository.UpsertLocalAuth(txCtx, &model.UserLocalAuth{
+				UserID:       user.ID,
+				PasswordHash: newPasswordHash,
+				PasswordAlgo: cryptoUtil.AlgoBcrypt,
+			})
+		}
+		return nil
 	}); err != nil {
 		return err
 	}
@@ -276,7 +320,6 @@ func (userService *UserService) UpdateUser(ctx context.Context, userdto model.Us
 	}
 
 	// 发布用户更新事件
-	user.Password = "" // 不包含密码信息
 	eventbus.Notify(context.Background(), userService.bus, event.UserUpdated{User: user})
 
 	return nil
@@ -323,17 +366,16 @@ func (userService *UserService) UpdateUserAdmin(ctx context.Context, id string) 
 	}
 
 	// 发布用户更新事件
-	user.Password = "" // 不包含密码信息
 	eventbus.Notify(context.Background(), userService.bus, event.UserUpdated{User: user})
 
 	return nil
 }
 
 // GetAllUsers 获取所有用户列表
-// 返回除 Owner 外的所有用户，并移除密码信息
+// 返回除 Owner 外的所有用户（用户实体已不含密码字段，密码存于 user_local_auth）
 //
 // 返回:
-//   - []model.User: 用户列表（不包含密码信息）
+//   - []model.User: 用户列表
 //   - error: 获取过程中的错误信息
 func (userService *UserService) GetAllUsers(ctx context.Context) ([]model.User, error) {
 	// Only Admin can get all users
@@ -362,11 +404,6 @@ func (userService *UserService) GetAllUsers(ctx context.Context) ([]model.User, 
 			allures = append(allures[:i], allures[i+1:]...)
 			break
 		}
-	}
-
-	// 处理用户信息(去掉密码)
-	for i := range allures {
-		allures[i].Password = ""
 	}
 
 	return allures, nil
@@ -429,7 +466,6 @@ func (userService *UserService) DeleteUser(ctx context.Context, id string) error
 		return err
 	}
 
-	deletedUser.Password = ""
 	eventbus.Notify(context.Background(), userService.bus, event.UserDeleted{User: deletedUser})
 	return nil
 }

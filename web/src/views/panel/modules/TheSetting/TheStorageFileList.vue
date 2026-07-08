@@ -9,9 +9,40 @@ import { useI18n } from 'vue-i18n'
 import { theToast } from '@/utils/toast'
 import DownloadIcon from '@/components/icons/download.vue'
 import ViewIcon from '@/components/icons/view.vue'
-import gsap from 'gsap'
 import { useSettingStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+
+// GSAP 缓动的等价 CSS cubic-bezier：power2.out ≈ easeOutCubic，power2.inOut ≈ easeInOutCubic。
+const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)'
+const EASE_IN_OUT = 'cubic-bezier(0.65, 0, 0.35, 1)'
+
+// 跟踪每个元素当前正在运行的高度动画，替代 gsap.killTweensOf：开始新动画前取消旧的。
+const runningAnims = new WeakMap<HTMLElement, Animation>()
+
+const cancelAnim = (el: HTMLElement) => {
+  runningAnims.get(el)?.cancel()
+  runningAnims.delete(el)
+}
+
+// 用 Web Animations API 播放一段动画，并在结束（或被取消）时清理跟踪表。
+const playAnim = (
+  el: HTMLElement,
+  keyframes: Keyframe[],
+  options: KeyframeAnimationOptions,
+  onFinish?: () => void,
+) => {
+  cancelAnim(el)
+  const anim = el.animate(keyframes, options)
+  runningAnims.set(el, anim)
+  anim.onfinish = () => {
+    if (runningAnims.get(el) === anim) runningAnims.delete(el)
+    onFinish?.()
+  }
+  anim.oncancel = () => {
+    if (runningAnims.get(el) === anim) runningAnims.delete(el)
+  }
+  return anim
+}
 
 type RootStorageType = typeof FILE_STORAGE_TYPE.LOCAL | typeof FILE_STORAGE_TYPE.OBJECT
 
@@ -205,21 +236,14 @@ const toggleFolder = async (storageType: RootStorageType, node: TreeNode) => {
   await nextTick()
   const endHeight = contentEl.scrollHeight
   if (startHeight === 0 || startHeight === endHeight) return
-  gsap.killTweensOf(contentEl)
-  gsap.fromTo(
+  contentEl.style.overflow = 'hidden'
+  playAnim(
     contentEl,
-    { height: startHeight },
-    {
-      height: endHeight,
-      duration: 0.26,
-      ease: 'power2.out',
-      onStart: () => {
-        contentEl.style.overflow = 'hidden'
-      },
-      onComplete: () => {
-        contentEl.style.height = 'auto'
-        contentEl.style.overflow = ''
-      },
+    [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
+    { duration: 260, easing: EASE_OUT },
+    () => {
+      contentEl.style.height = 'auto'
+      contentEl.style.overflow = ''
     },
   )
 }
@@ -344,7 +368,7 @@ const isErrorLikeBlob = async (blob: Blob) => {
 
 const onBeforeEnter = (el: Element) => {
   const element = el as HTMLElement
-  gsap.killTweensOf(element)
+  cancelAnim(element)
   element.style.overflow = 'hidden'
   element.style.height = '0'
   element.style.opacity = '0'
@@ -352,14 +376,19 @@ const onBeforeEnter = (el: Element) => {
 
 const onEnter = (el: Element, done: () => void) => {
   const element = el as HTMLElement
-  gsap.killTweensOf(element)
-  gsap.to(element, {
-    height: element.scrollHeight,
-    opacity: 1,
-    duration: 0.34,
-    ease: 'power2.out',
-    onComplete: done,
-  })
+  playAnim(
+    element,
+    [
+      { height: '0px', opacity: 0 },
+      { height: `${element.scrollHeight}px`, opacity: 1 },
+    ],
+    { duration: 340, easing: EASE_OUT },
+    () => {
+      element.style.height = 'auto'
+      element.style.opacity = '1'
+      done()
+    },
+  )
 }
 
 const onAfterEnter = (el: Element) => {
@@ -370,7 +399,7 @@ const onAfterEnter = (el: Element) => {
 
 const onBeforeLeave = (el: Element) => {
   const element = el as HTMLElement
-  gsap.killTweensOf(element)
+  cancelAnim(element)
   element.style.overflow = 'hidden'
   element.style.height = `${element.scrollHeight}px`
   element.style.opacity = '1'
@@ -378,14 +407,19 @@ const onBeforeLeave = (el: Element) => {
 
 const onLeave = (el: Element, done: () => void) => {
   const element = el as HTMLElement
-  gsap.killTweensOf(element)
-  gsap.to(element, {
-    height: 0,
-    opacity: 0,
-    duration: 0.24,
-    ease: 'power2.inOut',
-    onComplete: done,
-  })
+  playAnim(
+    element,
+    [
+      { height: `${element.scrollHeight}px`, opacity: 1 },
+      { height: '0px', opacity: 0 },
+    ],
+    { duration: 240, easing: EASE_IN_OUT },
+    () => {
+      element.style.height = '0px'
+      element.style.opacity = '0'
+      done()
+    },
+  )
 }
 
 const onAfterLeave = (el: Element) => {

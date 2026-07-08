@@ -7,6 +7,36 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 For releases prior to v4.6.5, see the [GitHub releases page](https://github.com/lin-snow/Ech0/releases) — earlier release notes are not retroactively imported here.
 
 
+## [5.4.2] - 2026-07-07
+
+A security-hardening follow-up. The headline is the **local-password overhaul** — passwords move off the users table's bare, unsalted MD5 into a dedicated bcrypt-backed table, upgrading transparently on the next login. Alongside it, the RSS feed learns to render the audio and video attachments that 5.4.0 introduced, and three "whole library for one small feature" dependencies were dropped to keep the footprint lean.
+
+### Added
+
+- **Audio and video attachments now render in the RSS feed.** 5.4.0 let an Echo carry an audio track or an MP4 video, but the RSS/Atom feed still emitted images only. The feed now renders each attachment by category: video as `<video controls>` and audio as `<audio controls>` — each wrapping an inline `<a>` link, so a reader that strips media tags degrades to a clickable link instead of dropping the content — other file types as a 📎 download link, and images stay as `<img>`.
+- **Chat sources show a media-type badge.** When a Copilot chat answer cites an Echo that carries a video or audio attachment, its source card now shows a 🎬 / 🎵 type badge (image hits still show a thumbnail).
+
+### Changed
+
+- **Local passwords are capped at 72 bytes.** bcrypt only hashes the first 72 bytes of a password, so the write paths — register, initialize owner, change password — now reject anything longer up front with a localizable `PASSWORD_TOO_LONG` error, instead of silently truncating or leaking bcrypt's raw English error string.
+
+### Security
+
+- **Local passwords rehoused in `user_local_auth` and rehashed with bcrypt.** The local password moved off `users.password` — a **bare, unsalted MD5** — into the dedicated `user_local_auth` table, aligning it with the OAuth / OIDC / Passkey identity tables, and the hash upgraded from MD5 to **bcrypt**. Existing accounts upgrade transparently: the first successful login re-verifies against the old MD5 and then lazily rehashes to bcrypt (best-effort), and an idempotent backfill migration drops the legacy `users.password` column — so the `users` table no longer holds any secret. New databases start on bcrypt directly; no operator action is required.
+- **RSS media fields are HTML-escaped before rendering.** With attachments now rendered into the feed (above), each attachment's URL and filename — user-controllable and possibly external — are HTML-entity-escaped before entering the Atom `<summary type="html">`, closing the same stored-XSS injection class as [GHSA-3v85-fqvh-7rxf](https://github.com/advisories/GHSA-3v85-fqvh-7rxf) (fixed in 5.3.0) for the newly rendered media fields.
+
+### Fixed
+
+- **A real DB fault during login is no longer masked as "wrong password".** The `user_local_auth` lookup still fails closed to `PASSWORD_INCORRECT`, but it now distinguishes a genuine database error from record-not-found and warn-logs the former (with `user_id`), so a transient DB fault is diagnosable instead of looking like a bad credential.
+
+### Internal
+
+- **Three single-purpose dependencies dropped for a lighter footprint.** `go-github` (+ `go-querystring`), `chalk`, and `gsap` were each replaced with a standard-library or native-API equivalent, behavior unchanged: the GitHub "latest version" check is now plain `net/http` + `encoding/json` against the releases REST API (same pagination, 30-min cache, draft / prerelease / `ech0-*` filtering, and semver canonicalization); the console banner is colored via native `%c` styling; and the storage file-list tweens run on the Web Animations API. (Consistent with the project's lightweight principle.)
+- **Dependency bumps (Go, `go-patch-minor` group)**: `anthropics/anthropic-sdk-go` 1.52.0 → 1.56.0, `aws/aws-sdk-go-v2/service/s3` 1.104.0 → 1.104.2 (plus `aws-sdk-go-v2` core / `config` / `credentials` patch bumps), `wneessen/go-mail` 0.7.3 → 0.8.0.
+- **Dependency bumps (`web/`)**: `markdown-it` 14.2.0 → 14.3.0, `unocss` / `@unocss/preset-wind4` 66.7.3 → 66.7.4, `prettier` 3.9.1 → 3.9.4, `tsx` 4.22.4 → 4.23.0, `vite` 8.1.2 → 8.1.3.
+- **Dependency bumps (CI)**: `actions/upload-artifact` 4 → 7.
+
+
 ## [5.4.1] - 2026-07-05
 
 A focused follow-up to 5.4.0's media support: the inline video player got a round of playback-UX fixes and polish.

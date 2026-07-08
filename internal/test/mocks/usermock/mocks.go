@@ -942,6 +942,63 @@ func (_c *MockUserRepo_UpdateUser_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// UpsertLocalAuth provides a mock function for the type MockUserRepo
+func (_mock *MockUserRepo) UpsertLocalAuth(ctx context.Context, localAuth *model.UserLocalAuth) error {
+	ret := _mock.Called(ctx, localAuth)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertLocalAuth")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.UserLocalAuth) error); ok {
+		r0 = returnFunc(ctx, localAuth)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserRepo_UpsertLocalAuth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertLocalAuth'
+type MockUserRepo_UpsertLocalAuth_Call struct {
+	*mock.Call
+}
+
+// UpsertLocalAuth is a helper method to define mock.On call
+//   - ctx context.Context
+//   - localAuth *model.UserLocalAuth
+func (_e *MockUserRepo_Expecter) UpsertLocalAuth(ctx any, localAuth any) *MockUserRepo_UpsertLocalAuth_Call {
+	return &MockUserRepo_UpsertLocalAuth_Call{Call: _e.mock.On("UpsertLocalAuth", ctx, localAuth)}
+}
+
+func (_c *MockUserRepo_UpsertLocalAuth_Call) Run(run func(ctx context.Context, localAuth *model.UserLocalAuth)) *MockUserRepo_UpsertLocalAuth_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *model.UserLocalAuth
+		if args[1] != nil {
+			arg1 = args[1].(*model.UserLocalAuth)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepo_UpsertLocalAuth_Call) Return(err error) *MockUserRepo_UpsertLocalAuth_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUserRepo_UpsertLocalAuth_Call) RunAndReturn(run func(ctx context.Context, localAuth *model.UserLocalAuth) error) *MockUserRepo_UpsertLocalAuth_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockInstallStateRepo creates a new instance of MockInstallStateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockInstallStateRepo(t interface {
@@ -1639,6 +1696,63 @@ func (_c *MockRepository_UpdateUser_Call) Return(err error) *MockRepository_Upda
 }
 
 func (_c *MockRepository_UpdateUser_Call) RunAndReturn(run func(ctx context.Context, user *model.User) error) *MockRepository_UpdateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpsertLocalAuth provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpsertLocalAuth(ctx context.Context, localAuth *model.UserLocalAuth) error {
+	ret := _mock.Called(ctx, localAuth)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertLocalAuth")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *model.UserLocalAuth) error); ok {
+		r0 = returnFunc(ctx, localAuth)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpsertLocalAuth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertLocalAuth'
+type MockRepository_UpsertLocalAuth_Call struct {
+	*mock.Call
+}
+
+// UpsertLocalAuth is a helper method to define mock.On call
+//   - ctx context.Context
+//   - localAuth *model.UserLocalAuth
+func (_e *MockRepository_Expecter) UpsertLocalAuth(ctx any, localAuth any) *MockRepository_UpsertLocalAuth_Call {
+	return &MockRepository_UpsertLocalAuth_Call{Call: _e.mock.On("UpsertLocalAuth", ctx, localAuth)}
+}
+
+func (_c *MockRepository_UpsertLocalAuth_Call) Run(run func(ctx context.Context, localAuth *model.UserLocalAuth)) *MockRepository_UpsertLocalAuth_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *model.UserLocalAuth
+		if args[1] != nil {
+			arg1 = args[1].(*model.UserLocalAuth)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpsertLocalAuth_Call) Return(err error) *MockRepository_UpsertLocalAuth_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpsertLocalAuth_Call) RunAndReturn(run func(ctx context.Context, localAuth *model.UserLocalAuth) error) *MockRepository_UpsertLocalAuth_Call {
 	_c.Call.Return(run)
 	return _c
 }

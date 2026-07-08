@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 // mustJSON 序列化任意值为 JSON 字符串，失败即终止用例。供本包多份测试文件共用。
@@ -41,7 +42,10 @@ func TestLogin(t *testing.T) {
 
 	const username = "alice"
 	const plainPassword = "s3cr3t"
-	hashed := cryptoUtil.MD5Encrypt(plainPassword)
+	const userID = "u-1"
+	md5Hash := cryptoUtil.MD5Encrypt(plainPassword)
+	bcryptHash, err := cryptoUtil.HashPassword(plainPassword)
+	require.NoError(t, err)
 
 	cases := []struct {
 		name      string
@@ -73,12 +77,52 @@ func TestLogin(t *testing.T) {
 			wantErr: commonModel.USER_NOTFOUND,
 		},
 		{
+			name: "missing local auth row maps to PASSWORD_INCORRECT",
+			dto:  authModel.LoginDto{Username: username, Password: plainPassword},
+			setupRepo: func(repo *authmock.MockRepository) {
+				repo.EXPECT().
+					GetUserByUsername(mock.Anything, username).
+					Return(userModel.User{ID: userID, Username: username}, nil).
+					Once()
+				repo.EXPECT().
+					GetLocalAuthByUserID(mock.Anything, userID).
+					Return(userModel.UserLocalAuth{}, gorm.ErrRecordNotFound).
+					Once()
+			},
+			wantErr: commonModel.PASSWORD_INCORRECT,
+		},
+		{
+			// 真实 DB 故障（非 ErrRecordNotFound）应 fail-closed 为 PASSWORD_INCORRECT，
+			// 不泄露内部错误（并在实现里记 Warn，此处只断言对外行为）。
+			name: "local auth lookup db error maps to PASSWORD_INCORRECT",
+			dto:  authModel.LoginDto{Username: username, Password: plainPassword},
+			setupRepo: func(repo *authmock.MockRepository) {
+				repo.EXPECT().
+					GetUserByUsername(mock.Anything, username).
+					Return(userModel.User{ID: userID, Username: username}, nil).
+					Once()
+				repo.EXPECT().
+					GetLocalAuthByUserID(mock.Anything, userID).
+					Return(userModel.UserLocalAuth{}, errors.New("db down")).
+					Once()
+			},
+			wantErr: commonModel.PASSWORD_INCORRECT,
+		},
+		{
 			name: "wrong password maps to PASSWORD_INCORRECT",
 			dto:  authModel.LoginDto{Username: username, Password: plainPassword},
 			setupRepo: func(repo *authmock.MockRepository) {
 				repo.EXPECT().
 					GetUserByUsername(mock.Anything, username).
-					Return(userModel.User{ID: "u-1", Username: username, Password: "different-hash"}, nil).
+					Return(userModel.User{ID: userID, Username: username}, nil).
+					Once()
+				repo.EXPECT().
+					GetLocalAuthByUserID(mock.Anything, userID).
+					Return(userModel.UserLocalAuth{
+						UserID:       userID,
+						PasswordHash: cryptoUtil.MD5Encrypt("another-password"),
+						PasswordAlgo: cryptoUtil.AlgoMD5,
+					}, nil).
 					Once()
 			},
 			wantErr: commonModel.PASSWORD_INCORRECT,
@@ -96,12 +140,21 @@ func TestLogin(t *testing.T) {
 		})
 	}
 
-	t.Run("success issues a non-empty token pair", func(t *testing.T) {
+	t.Run("success with bcrypt hash issues token pair without upgrade", func(t *testing.T) {
 		svc, repo, _, _ := newSvc(t, kvstore.NewMemory())
 		repo.EXPECT().
 			GetUserByUsername(mock.Anything, username).
-			Return(userModel.User{ID: "u-1", Username: username, Password: hashed}, nil).
+			Return(userModel.User{ID: userID, Username: username}, nil).
 			Once()
+		repo.EXPECT().
+			GetLocalAuthByUserID(mock.Anything, userID).
+			Return(userModel.UserLocalAuth{
+				UserID:       userID,
+				PasswordHash: bcryptHash,
+				PasswordAlgo: cryptoUtil.AlgoBcrypt,
+			}, nil).
+			Once()
+		// 已是 bcrypt：不应触发惰性升级写入（未对 UpdateLocalAuthPassword 设期望）。
 
 		pair, err := svc.Login(&authModel.LoginDto{Username: username, Password: plainPassword})
 		require.NoError(t, err)
@@ -109,6 +162,32 @@ func TestLogin(t *testing.T) {
 		assert.NotEmpty(t, pair.AccessToken)
 		assert.NotEmpty(t, pair.RefreshToken)
 		assert.Equal(t, config.Config().Auth.Jwt.Expires, pair.ExpiresIn)
+	})
+
+	t.Run("success with legacy md5 hash triggers lazy upgrade to bcrypt", func(t *testing.T) {
+		svc, repo, _, _ := newSvc(t, kvstore.NewMemory())
+		repo.EXPECT().
+			GetUserByUsername(mock.Anything, username).
+			Return(userModel.User{ID: userID, Username: username}, nil).
+			Once()
+		repo.EXPECT().
+			GetLocalAuthByUserID(mock.Anything, userID).
+			Return(userModel.UserLocalAuth{
+				UserID:       userID,
+				PasswordHash: md5Hash,
+				PasswordAlgo: cryptoUtil.AlgoMD5,
+			}, nil).
+			Once()
+		// 惰性升级：校验通过后就地换算为 bcrypt（bcrypt 哈希带随机盐、不确定，用 mock.Anything）。
+		repo.EXPECT().
+			UpdateLocalAuthPassword(mock.Anything, userID, mock.Anything, cryptoUtil.AlgoBcrypt).
+			Return(nil).
+			Once()
+
+		pair, err := svc.Login(&authModel.LoginDto{Username: username, Password: plainPassword})
+		require.NoError(t, err)
+		require.NotNil(t, pair)
+		assert.NotEmpty(t, pair.AccessToken)
 	})
 }
 

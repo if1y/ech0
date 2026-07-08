@@ -1466,6 +1466,72 @@ func (_c *MockRepository_DeletePasskeyByID_Call) RunAndReturn(run func(ctx conte
 	return _c
 }
 
+// GetLocalAuthByUserID provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetLocalAuthByUserID(ctx context.Context, userID string) (model0.UserLocalAuth, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLocalAuthByUserID")
+	}
+
+	var r0 model0.UserLocalAuth
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (model0.UserLocalAuth, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) model0.UserLocalAuth); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(model0.UserLocalAuth)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetLocalAuthByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLocalAuthByUserID'
+type MockRepository_GetLocalAuthByUserID_Call struct {
+	*mock.Call
+}
+
+// GetLocalAuthByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockRepository_Expecter) GetLocalAuthByUserID(ctx any, userID any) *MockRepository_GetLocalAuthByUserID_Call {
+	return &MockRepository_GetLocalAuthByUserID_Call{Call: _e.mock.On("GetLocalAuthByUserID", ctx, userID)}
+}
+
+func (_c *MockRepository_GetLocalAuthByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockRepository_GetLocalAuthByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetLocalAuthByUserID_Call) Return(userLocalAuth model0.UserLocalAuth, err error) *MockRepository_GetLocalAuthByUserID_Call {
+	_c.Call.Return(userLocalAuth, err)
+	return _c
+}
+
+func (_c *MockRepository_GetLocalAuthByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) (model0.UserLocalAuth, error)) *MockRepository_GetLocalAuthByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOAuthInfo provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetOAuthInfo(userId string, provider string) (model0.UserExternalIdentity, error) {
 	ret := _mock.Called(userId, provider)
@@ -2004,6 +2070,75 @@ func (_c *MockRepository_ListPasskeysByUserID_Call) Return(passkeys []model.Pass
 }
 
 func (_c *MockRepository_ListPasskeysByUserID_Call) RunAndReturn(run func(userID string) ([]model.Passkey, error)) *MockRepository_ListPasskeysByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateLocalAuthPassword provides a mock function for the type MockRepository
+func (_mock *MockRepository) UpdateLocalAuthPassword(ctx context.Context, userID string, passwordHash string, passwordAlgo string) error {
+	ret := _mock.Called(ctx, userID, passwordHash, passwordAlgo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateLocalAuthPassword")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, passwordHash, passwordAlgo)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_UpdateLocalAuthPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateLocalAuthPassword'
+type MockRepository_UpdateLocalAuthPassword_Call struct {
+	*mock.Call
+}
+
+// UpdateLocalAuthPassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+//   - passwordHash string
+//   - passwordAlgo string
+func (_e *MockRepository_Expecter) UpdateLocalAuthPassword(ctx any, userID any, passwordHash any, passwordAlgo any) *MockRepository_UpdateLocalAuthPassword_Call {
+	return &MockRepository_UpdateLocalAuthPassword_Call{Call: _e.mock.On("UpdateLocalAuthPassword", ctx, userID, passwordHash, passwordAlgo)}
+}
+
+func (_c *MockRepository_UpdateLocalAuthPassword_Call) Run(run func(ctx context.Context, userID string, passwordHash string, passwordAlgo string)) *MockRepository_UpdateLocalAuthPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_UpdateLocalAuthPassword_Call) Return(err error) *MockRepository_UpdateLocalAuthPassword_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_UpdateLocalAuthPassword_Call) RunAndReturn(run func(ctx context.Context, userID string, passwordHash string, passwordAlgo string) error) *MockRepository_UpdateLocalAuthPassword_Call {
 	_c.Call.Return(run)
 	return _c
 }

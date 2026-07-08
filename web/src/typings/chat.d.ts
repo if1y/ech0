@@ -12,7 +12,7 @@ declare namespace App {
         username: string
         echo_created: number
         distance: number
-        // 命中 Echo 的图片附件（后端回查填充，整条 File，供前端展示缩略图）
+        // 命中 Echo 的媒体附件（图片/视频/音频，后端回查填充，整条 File，供前端展示缩略图/类型标志）
         files?: ChatSourceFile[]
         // 命中 Echo 的扩展分享（音乐/网站/位置…），仅用于在来源里展示一个类型标签
         extension?: Ech0.EchoExtension

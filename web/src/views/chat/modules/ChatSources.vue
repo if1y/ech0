@@ -15,6 +15,11 @@
           <span aria-hidden="true">{{ src.ext.icon }}</span>
           {{ src.ext.label }}
         </span>
+        <!-- 媒体类型标志：视频/音频附件用图标 + 类型标签展示（图片走下方缩略图） -->
+        <span v-for="badge in src.mediaBadges" :key="badge.label" class="sources__ext">
+          <span aria-hidden="true">{{ badge.icon }}</span>
+          {{ badge.label }}
+        </span>
       </button>
       <!-- 命中 Echo 的配图缩略图：复用 getImageUrl 解析 local/S3/external 直链 -->
       <div v-if="src.images.length" class="sources__thumbs">
@@ -67,6 +72,13 @@ type DisplaySource = {
   empty: boolean
   images: App.Api.Ech0.FileObject[]
   ext?: { icon: string; label: string }
+  mediaBadges: { icon: string; label: string }[]
+}
+
+// 媒体类型 → 图标 emoji + i18n 标签 key（视频/音频；图片走缩略图不进这里）
+const MEDIA_META: Record<string, { icon: string; labelKey: string }> = {
+  video: { icon: '🎬', labelKey: 'editor.mediaTypeVideo' },
+  audio: { icon: '🎵', labelKey: 'editor.mediaTypeAudio' },
 }
 
 // Extension 类型 → 图标 emoji + i18n 标签 key（复用编辑器里既有的扩展类型文案）
@@ -96,7 +108,16 @@ const displaySources = computed<DisplaySource[]>(() =>
       .map((f) => ({ ...f, echo_id: src.echo_id }))
     const meta = src.extension ? EXT_META[src.extension.type] : undefined
     const ext = meta ? { icon: meta.icon, label: t(meta.labelKey) } : undefined
-    return { echoId: src.echo_id, day, text, empty, images, ext }
+    // 视频/音频类型标志：按类型去重（每条 Echo 至多各一个），图片不进这里
+    const mediaTypes = new Set<string>()
+    for (const f of src.files ?? []) {
+      if (f.category && f.category in MEDIA_META) mediaTypes.add(f.category)
+    }
+    const mediaBadges = [...mediaTypes].map((c) => ({
+      icon: MEDIA_META[c].icon,
+      label: t(MEDIA_META[c].labelKey),
+    }))
+    return { echoId: src.echo_id, day, text, empty, images, ext, mediaBadges }
   }),
 )
 

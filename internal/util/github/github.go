@@ -5,12 +5,13 @@ package util
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v80/github"
 	"golang.org/x/mod/semver"
 )
 
@@ -45,7 +46,45 @@ var latestVersionCache struct {
 	expiresAt time.Time
 }
 
-const listReleasesMaxPages = 10
+const (
+	listReleasesMaxPages = 10
+	releasesPerPage      = 30
+	githubAPIBase        = "https://api.github.com"
+)
+
+// githubRelease 仅解出挑选最新版本所需的字段。
+type githubRelease struct {
+	TagName    string `json:"tag_name"`
+	Draft      bool   `json:"draft"`
+	Prerelease bool   `json:"prerelease"`
+}
+
+// fetchReleasesPage 请求某一页 releases（GitHub REST API）。
+func fetchReleasesPage(ctx context.Context, owner, repo string, page int) ([]githubRelease, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/releases?per_page=%d&page=%d", githubAPIBase, owner, repo, releasesPerPage, page)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("github releases request failed: status %d", resp.StatusCode)
+	}
+
+	var releases []githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		return nil, err
+	}
+	return releases, nil
+}
 
 // GetLatestVersion 获取最新版本（跳过 Helm chart 专用 tag：以 ech0- 开头）
 func GetLatestVersion() (string, error) {
@@ -61,32 +100,27 @@ func GetLatestVersion() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	client := github.NewClient(nil)
 	owner, repo := "lin-snow", "Ech0"
 
-	opts := &github.ListOptions{PerPage: 30, Page: 1}
 	var best string
 pageLoop:
-	for page := 0; page < listReleasesMaxPages; page++ {
-		releases, resp, err := client.Repositories.ListReleases(ctx, owner, repo, opts)
+	for page := 1; page <= listReleasesMaxPages; page++ {
+		releases, err := fetchReleasesPage(ctx, owner, repo, page)
 		if err != nil {
 			return "", fmt.Errorf("list releases failed: %w", err)
 		}
 		for _, rel := range releases {
-			if rel == nil {
+			if rel.Draft {
 				continue
 			}
-			if rel.GetDraft() {
-				continue
-			}
-			tag := strings.TrimSpace(rel.GetTagName())
+			tag := strings.TrimSpace(rel.TagName)
 			if tag == "" {
 				continue
 			}
 			if isHelmChartArtifactStyleTag(tag) {
 				continue
 			}
-			if rel.GetPrerelease() {
+			if rel.Prerelease {
 				continue
 			}
 			canon := canonicalStableSemverFromReleaseTag(tag)
@@ -96,10 +130,10 @@ pageLoop:
 			best = canon
 			break pageLoop
 		}
-		if resp == nil || resp.NextPage == 0 {
+		// 本页少于满页数量，说明已到最后一页（GitHub 用 Link 头表示下一页，这里用条数判断即可）。
+		if len(releases) < releasesPerPage {
 			break
 		}
-		opts.Page = resp.NextPage
 	}
 
 	if best == "" {

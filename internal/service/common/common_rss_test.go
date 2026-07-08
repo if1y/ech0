@@ -165,6 +165,84 @@ func TestGenerateRSS_RendersEchoImages(t *testing.T) {
 	assert.Contains(t, atom, "look at this")
 }
 
+// TestGenerateRSS_RendersMediaByCategory 附件按 Category 分流渲染：
+// video → <video controls>、audio → <audio controls>（均内嵌 <a> 链接兜底），
+// 其它类型（pdf/file）→ 📎 下载链接；image 仍是 <img>。
+func TestGenerateRSS_RendersMediaByCategory(t *testing.T) {
+	repo := commonmock.NewMockCommonRepository(t)
+	svc := commonService.NewCommonService(repo, newFakeCache())
+
+	echos := []echoModel.Echo{
+		{
+			ID:        "echo-media",
+			Username:  "carol",
+			Content:   "mixed media",
+			CreatedAt: time.Now().UTC().Unix(),
+			EchoFiles: []echoModel.EchoFile{
+				{File: fileModel.File{Category: "image", URL: "http://example.com/files/pic.png"}},
+				{File: fileModel.File{Category: "video", URL: "http://example.com/files/clip.mp4"}},
+				{File: fileModel.File{Category: "audio", URL: "http://example.com/files/song.mp3"}},
+				{File: fileModel.File{Category: "pdf", URL: "http://example.com/files/doc.pdf", Name: "doc.pdf"}},
+			},
+		},
+	}
+
+	repo.EXPECT().GetAllEchos(mock.Anything, false).Return(echos, nil).Once()
+	repo.EXPECT().TrackRSSCacheKey(mock.Anything).Return().Once()
+
+	ctx := newRSSContext(t, "example.com")
+	atom, err := svc.GenerateRSS(ctx)
+	require.NoError(t, err)
+
+	// summary 内容会被 feeds 库再做一层 XML 转义（< → &lt;，" → &#34;），故断言转义后的形态。
+	// image → <img>
+	assert.Contains(t, atom, `&lt;img src=&#34;http://example.com/files/pic.png&#34;`, "图片应渲染为 <img>")
+	// video → <video controls> 且内嵌 <a> 链接兜底
+	assert.Contains(t, atom, `&lt;video controls src=&#34;http://example.com/files/clip.mp4&#34;`, "视频应渲染为 <video controls>")
+	assert.Contains(t, atom, `&lt;a href=&#34;http://example.com/files/clip.mp4&#34;&gt;打开视频&lt;/a&gt;`, "视频应内嵌链接兜底")
+	// audio → <audio controls> 且内嵌 <a> 链接兜底
+	assert.Contains(t, atom, `&lt;audio controls src=&#34;http://example.com/files/song.mp3&#34;`, "音频应渲染为 <audio controls>")
+	assert.Contains(t, atom, `&lt;a href=&#34;http://example.com/files/song.mp3&#34;&gt;打开音频&lt;/a&gt;`, "音频应内嵌链接兜底")
+	// pdf/其它 → 📎 下载链接（文件名作为链接文本）
+	assert.Contains(t, atom, `&lt;a href=&#34;http://example.com/files/doc.pdf&#34;&gt;doc.pdf&lt;/a&gt;`, "普通文件应渲染为下载链接")
+}
+
+// TestGenerateRSS_MediaFieldEscaping 绑定 GHSA-3v85-fqvh-7rxf 同类注入：
+// external 附件的 URL / 文件名是用户可控字段，进入 <summary type="html"> 前必须 HTML 实体转义，
+// 不得让原始引号/尖括号突破属性或标签上下文。
+func TestGenerateRSS_MediaFieldEscaping(t *testing.T) {
+	repo := commonmock.NewMockCommonRepository(t)
+	svc := commonService.NewCommonService(repo, newFakeCache())
+
+	echos := []echoModel.Echo{
+		{
+			ID:        "echo-evil",
+			Username:  "mallory",
+			Content:   "benign",
+			CreatedAt: time.Now().UTC().Unix(),
+			EchoFiles: []echoModel.EchoFile{
+				{File: fileModel.File{
+					Category: "file",
+					URL:      `http://x/"><script>alert(1)</script>`,
+					Name:     `<script>alert(2)</script>`,
+				}},
+			},
+		},
+	}
+
+	repo.EXPECT().GetAllEchos(mock.Anything, false).Return(echos, nil).Once()
+	repo.EXPECT().TrackRSSCacheKey(mock.Anything).Return().Once()
+
+	ctx := newRSSContext(t, "example.com")
+	atom, err := svc.GenerateRSS(ctx)
+	require.NoError(t, err)
+
+	// 不得出现由 URL/文件名注入的原始 <script>。
+	assert.NotContains(t, atom, "<script>", "URL/文件名注入的原始 script 标签不得出现")
+	// 单层转义形态（&lt;script&gt;）也不应出现——须先 HTML 实体转义再经 Atom 的 XML 序列化，呈双层转义。
+	assert.NotContains(t, atom, "&lt;script&gt;", "媒体字段必须先做 HTML 实体转义，杜绝单层转义形态")
+}
+
 // TestGenerateRSS_ReadThrough 读穿透：相同 host 第二次调用命中缓存，不再回源仓库。
 func TestGenerateRSS_ReadThrough(t *testing.T) {
 	repo := commonmock.NewMockCommonRepository(t)

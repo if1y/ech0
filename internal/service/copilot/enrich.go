@@ -24,7 +24,7 @@ const maxImageBytes = 5 << 20 // 5MB
 
 // enrichHits 按命中顺序（最相关在前）回查 Echo（GetEchoById 带缓存），一次加载取齐三样：
 //   - exts：每条命中的 Extension 渲染文本（音乐/网站/位置等分享，常开，喂给模型理解）；
-//   - results[i].Files：命中 Echo 的图片附件元数据（常开，随 SSE 给前端展示缩略图，仅 URL 不含字节）；
+//   - results[i].Files：命中 Echo 的媒体附件元数据（图片/视频/音频，常开，随 SSE 给前端展示，仅元数据不含字节）；
 //   - images：配图的 base64 ImagePart，仅 multimodal 开启时收集，累计到 maxChatImages 即止（喂模型）。
 //
 // 不存进 embedding 索引、只在检索命中后回查，向量库保持纯文本干净。读取失败静默跳过（best-effort）。
@@ -47,12 +47,14 @@ func (s *CopilotService) enrichHits(
 
 		var files []fileModel.File
 		for _, ef := range echo.EchoFiles {
-			if !storage.NormalizeCategory(ef.File.Category).IsImageLike() {
-				continue
+			cat := storage.NormalizeCategory(ef.File.Category)
+			// 展示用：图片/视频/音频都带给前端（sources 里按类型展示缩略图或类型标志）。
+			switch cat {
+			case storage.CategoryImage, storage.CategoryVideo, storage.CategoryAudio:
+				files = append(files, ef.File) // 整条 File（含 storage_type/key/url/category 等）
 			}
-			files = append(files, ef.File) // 前端展示用：整条 File（含 storage_type/key/url 等）
-			// 多模态：再把图片字节读成 base64 喂给模型（受 maxChatImages 上限约束）。
-			if multimodal && s.storage != nil && len(images) < maxChatImages {
+			// 多模态：仅图片读成 base64 喂给模型（受 maxChatImages 上限约束）；视频/音频不入模型。
+			if cat.IsImageLike() && multimodal && s.storage != nil && len(images) < maxChatImages {
 				if part, ok := s.loadImagePart(ctx, ef.File); ok {
 					images = append(images, part)
 				}

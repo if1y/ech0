@@ -16,6 +16,7 @@ import (
 	"github.com/lin-snow/ech0/internal/cache"
 	commonModel "github.com/lin-snow/ech0/internal/model/common"
 	userModel "github.com/lin-snow/ech0/internal/model/user"
+	"github.com/lin-snow/ech0/internal/storage"
 	"github.com/lin-snow/ech0/internal/util/egress"
 	mdUtil "github.com/lin-snow/ech0/internal/util/md"
 	timezoneUtil "github.com/lin-snow/ech0/internal/util/timezone"
@@ -109,15 +110,36 @@ func (s *CommonService) GenerateRSS(ctx *gin.Context) (string, error) {
 				title := msg.Username + " - " + createdAt.Format("2006-01-02")
 
 				if len(msg.EchoFiles) > 0 {
-					var imageContent []byte
+					var mediaContent []byte
 					for _, ef := range msg.EchoFiles {
-						imageContent = fmt.Appendf(
-							imageContent,
-							"<img src=\"%s\" alt=\"Image\" style=\"max-width:100%%;height:auto;\" />",
-							ef.File.URL,
-						)
+						if ef.File.URL == "" {
+							continue
+						}
+						// URL 进属性、文件名进链接文本都是可能来自 external 的用户可控字段，进入
+						// <summary type="html"> 前必须做 HTML 实体转义，阻断订阅器二次解码触发的
+						// stored XSS（与下方标签转义同一注入类，GHSA-3v85-fqvh-7rxf）。
+						url := stdhtml.EscapeString(ef.File.URL)
+						switch storage.NormalizeCategory(ef.File.Category) {
+						case storage.CategoryImage:
+							mediaContent = fmt.Appendf(mediaContent,
+								"<img src=\"%s\" alt=\"Image\" style=\"max-width:100%%;height:auto;\" />", url)
+						case storage.CategoryVideo:
+							// 内嵌 <a> 兜底：RSS 阅读器若剥离 <video> 标签，仍退化成可点链接，不丢内容。
+							mediaContent = fmt.Appendf(mediaContent,
+								"<video controls src=\"%s\" style=\"max-width:100%%;\"><a href=\"%s\">打开视频</a></video>", url, url)
+						case storage.CategoryAudio:
+							mediaContent = fmt.Appendf(mediaContent,
+								"<audio controls src=\"%s\"><a href=\"%s\">打开音频</a></audio>", url, url)
+						default:
+							// pdf / document / file / markdown：给一个可点的下载链接。
+							name := stdhtml.EscapeString(ef.File.Name)
+							if name == "" {
+								name = "下载文件"
+							}
+							mediaContent = fmt.Appendf(mediaContent, "<p>📎 <a href=\"%s\">%s</a></p>", url, name)
+						}
 					}
-					renderedContent = append(imageContent, renderedContent...)
+					renderedContent = append(mediaContent, renderedContent...)
 				}
 
 				if len(msg.Tags) > 0 {
