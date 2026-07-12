@@ -63,9 +63,14 @@ type S3Config struct {
 // Provider-specific quirks (path style, default region) are applied
 // automatically. The caller's S3Config is not modified.
 //
-// For ProviderMinIO, request checksum calculation is set to
-// aws.RequestChecksumCalculationWhenRequired to avoid compatibility issues with
-// aws-chunked uploads on large objects.
+// For every non-AWS target (any provider other than ProviderAWS, or a
+// ProviderAWS config that points at a custom Endpoint), request checksum
+// calculation and response checksum validation are both set to WhenRequired.
+// This opts out of the flexible-checksum / aws-chunked trailer behavior that
+// aws-sdk-go-v2 s3 v1.74.1+ enables by default, which S3-compatible services
+// (MinIO, Cloudflare R2, Backblaze, Ceph, ...) reject with
+// XAmzContentSHA256Mismatch or "chunk too big". Real AWS S3 keeps the SDK
+// default (WhenSupported) so its data-integrity protections stay on.
 func NewS3Client(ctx context.Context, cfg *S3Config) (*s3.Client, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("virefs: S3Config must not be nil")
@@ -97,8 +102,16 @@ func NewS3Client(ctx context.Context, cfg *S3Config) (*s3.Client, error) {
 		if resolved.UsePathStyle != nil && *resolved.UsePathStyle {
 			o.UsePathStyle = true
 		}
-		if resolved.Provider == ProviderMinIO {
+		// Real AWS S3 fully supports the flexible-checksum (aws-chunked trailer)
+		// behavior added in aws-sdk-go-v2 s3 v1.74.1; S3-compatible providers
+		// (MinIO / R2 / Backblaze / Ceph / ...) reject it with
+		// XAmzContentSHA256Mismatch or "chunk too big". Treat "real AWS" as
+		// ProviderAWS with no custom endpoint; everything else opts out of both
+		// request checksum calculation and response checksum validation, which
+		// makes the SDK sign the real payload SHA256 instead.
+		if resolved.Provider != ProviderAWS || resolved.Endpoint != "" {
 			o.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+			o.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
 		}
 	})
 

@@ -58,8 +58,10 @@ func virefsS3Config(cfg config.StorageConfig) *virefs.S3Config {
 // UploadToS3 uploads the local snapshot ZIP to S3 at snapshots/<fileName>,
 // then cleans up old snapshots keeping only the most recent ones.
 //
-// VireFS v0.1.4+ sets RequestChecksumCalculationWhenRequired on MinIO clients
-// (see NewS3Client), avoiding aws-chunked bodies that MinIO rejects as "chunk too big".
+// VireFS opts every non-AWS target (MinIO, R2, "other" S3-compatible services)
+// out of request/response checksum calculation (see NewS3Client), avoiding the
+// aws-chunked trailer bodies those services reject as XAmzContentSHA256Mismatch
+// or "chunk too big".
 func UploadToS3(ctx context.Context, snapshotFilePath, fileName string, cfg config.StorageConfig) error {
 	f, err := os.Open(snapshotFilePath)
 	if err != nil {

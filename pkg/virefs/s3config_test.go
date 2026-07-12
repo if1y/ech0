@@ -73,18 +73,62 @@ func TestS3Config_Validation(t *testing.T) {
 	}
 }
 
-func TestNewS3Client_MinIO_RequestChecksumWhenRequired(t *testing.T) {
-	client, err := NewS3Client(t.Context(), &S3Config{
-		Provider:  ProviderMinIO,
-		Region:    "us-east-1",
-		Endpoint:  "http://localhost:9000",
-		AccessKey: "x",
-		SecretKey: "y",
-	})
-	if err != nil {
-		t.Fatalf("NewS3Client failed: %v", err)
+// TestNewS3Client_ChecksumBehavior verifies that every non-AWS target opts out
+// of the SDK's default flexible-checksum (aws-chunked trailer) behavior — which
+// S3-compatible services reject with XAmzContentSHA256Mismatch — while real AWS
+// S3 keeps the default WhenSupported so its integrity protections stay on.
+func TestNewS3Client_ChecksumBehavior(t *testing.T) {
+	tests := []struct {
+		name             string
+		cfg              S3Config
+		wantWhenRequired bool
+	}{
+		{
+			name:             "MinIO",
+			cfg:              S3Config{Provider: ProviderMinIO, Region: "us-east-1", Endpoint: "http://localhost:9000"},
+			wantWhenRequired: true,
+		},
+		{
+			name:             "R2",
+			cfg:              S3Config{Provider: ProviderR2, Endpoint: "https://acct.r2.cloudflarestorage.com"},
+			wantWhenRequired: true,
+		},
+		{
+			// "other" S3-compatible services (Backblaze, Wasabi, ...) map to
+			// ProviderAWS in Ech0 but always carry a custom endpoint.
+			name:             "OtherViaCustomEndpoint",
+			cfg:              S3Config{Provider: ProviderAWS, Endpoint: "https://s3.example.com"},
+			wantWhenRequired: true,
+		},
+		{
+			name:             "RealAWS",
+			cfg:              S3Config{Provider: ProviderAWS, Region: "us-east-1"},
+			wantWhenRequired: false,
+		},
 	}
-	if got := client.Options().RequestChecksumCalculation; got != aws.RequestChecksumCalculationWhenRequired {
-		t.Fatalf("RequestChecksumCalculation = %v, want %v", got, aws.RequestChecksumCalculationWhenRequired)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := tt.cfg
+			cfg.AccessKey, cfg.SecretKey = "x", "y"
+			client, err := NewS3Client(t.Context(), &cfg)
+			if err != nil {
+				t.Fatalf("NewS3Client failed: %v", err)
+			}
+
+			wantReq := aws.RequestChecksumCalculationWhenSupported
+			wantResp := aws.ResponseChecksumValidationWhenSupported
+			if tt.wantWhenRequired {
+				wantReq = aws.RequestChecksumCalculationWhenRequired
+				wantResp = aws.ResponseChecksumValidationWhenRequired
+			}
+
+			if got := client.Options().RequestChecksumCalculation; got != wantReq {
+				t.Errorf("RequestChecksumCalculation = %v, want %v", got, wantReq)
+			}
+			if got := client.Options().ResponseChecksumValidation; got != wantResp {
+				t.Errorf("ResponseChecksumValidation = %v, want %v", got, wantResp)
+			}
+		})
 	}
 }

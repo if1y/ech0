@@ -7,6 +7,19 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 For releases prior to v4.6.5, see the [GitHub releases page](https://github.com/lin-snow/Ech0/releases) — earlier release notes are not retroactively imported here.
 
 
+## [5.4.3] - 2026-07-12
+
+A storage-compatibility hotfix. `aws-sdk-go-v2`'s newer S3 default started sending `aws-chunked` trailer checksums that every S3-compatible backend other than real AWS rejects — this release turns that off wherever it doesn't belong, restoring uploads and snapshot export on R2, MinIO, Backblaze, Ceph, and other compatible stores.
+
+### Fixed
+
+- **Uploads and snapshot export work again on S3-compatible stores (R2, MinIO, Backblaze, Ceph, …).** `aws-sdk-go-v2`'s S3 client (v1.74.1+) enabled flexible-checksum (`aws-chunked` STREAMING trailer) bodies by default, which non-AWS S3 services reject with `XAmzContentSHA256Mismatch` or "chunk too big" — so both regular uploads and snapshot export to those backends failed with HTTP 400. VireFS previously opted only MinIO out; the opt-out now covers **every non-AWS target** (any non-`ProviderAWS`, or a `ProviderAWS` pointed at a custom endpoint), disabling both request checksum calculation and response checksum validation. Because all S3 access funnels through `NewS3Client`, this fixes regular uploads, presigned URLs, snapshot export, and the connection probe in one place. Real AWS S3 keeps the SDK default, so its data-integrity protections stay on.
+
+### Internal
+
+- **Dependency bumps (`web/`)**: `@types/node` 26.1.0 → 26.1.1, `eslint` 10.6.0 → 10.7.0, `vite` 8.1.3 → 8.1.4, `vitest` 4.1.9 → 4.1.10, `vue-tsc` 3.3.6 → 3.3.7.
+
+
 ## [5.4.2] - 2026-07-07
 
 A security-hardening follow-up. The headline is the **local-password overhaul** — passwords move off the users table's bare, unsalted MD5 into a dedicated bcrypt-backed table, upgrading transparently on the next login. Alongside it, the RSS feed learns to render the audio and video attachments that 5.4.0 introduced, and three "whole library for one small feature" dependencies were dropped to keep the footprint lean.
