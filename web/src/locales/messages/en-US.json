@@ -129,6 +129,7 @@
     "extImage": "Image",
     "extTime": "Time",
     "extGeneric": "Extension",
+    "extPrivate": "Private",
     "removeImage": "Remove attachment",
     "invalidImageIndex": "Invalid current attachment index; cannot remove",
     "removeImageConfirmTitle": "Remove this attachment?",

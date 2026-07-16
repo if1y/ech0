@@ -129,6 +129,7 @@
     "extImage": "Bild",
     "extTime": "Zeit",
     "extGeneric": "Erweiterung",
+    "extPrivate": "Privat",
     "removeImage": "Anhang entfernen",
     "invalidImageIndex": "Ungültiger Anhang-Index – Entfernen nicht möglich",
     "removeImageConfirmTitle": "Diesen Anhang entfernen?",

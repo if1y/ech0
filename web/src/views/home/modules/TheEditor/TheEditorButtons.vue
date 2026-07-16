@@ -232,6 +232,8 @@ const infoTooltipLines = computed<TooltipLine[]>(() => {
   if (customCreatedAt.value.trim()) {
     parts.push({ label: String(t('editor.extTime')), icon: DateIcon })
   }
+  if (echoToAdd.value.private)
+    parts.push({ label: String(t('editor.extPrivate')), icon: Private })
 
   return parts
 })

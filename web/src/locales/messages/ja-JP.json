@@ -129,6 +129,7 @@
     "extImage": "画像",
     "extTime": "時間",
     "extGeneric": "拡張",
+    "extPrivate": "非公開",
     "removeImage": "添付ファイルを削除",
     "invalidImageIndex": "添付ファイルのインデックスが無効です。削除できません！",
     "removeImageConfirmTitle": "この添付ファイルを削除しますか？",
