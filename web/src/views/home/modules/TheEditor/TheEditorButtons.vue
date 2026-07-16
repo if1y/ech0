@@ -227,6 +227,8 @@ const infoTooltipLines = computed<TooltipLine[]>(() => {
           ? extMap[extType as ExtensionType].icon
           : undefined,
     })
+  if (echoToAdd.value.private)
+    parts.push({ label: String(t('editor.extPrivate')), icon: Private })
 
   return parts
 })

@@ -118,6 +118,7 @@
     "extText": "文字",
     "extImage": "图片",
     "extGeneric": "扩展",
+    "extPrivate": "私密",
     "removeImage": "移除图片",
     "invalidImageIndex": "当前图片索引无效，无法删除！",
     "removeImageConfirmTitle": "确定要移除图片吗？",

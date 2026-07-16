@@ -118,6 +118,7 @@
     "extText": "Text",
     "extImage": "Bild",
     "extGeneric": "Erweiterung",
+    "extPrivate": "Privat",
     "removeImage": "Bild entfernen",
     "invalidImageIndex": "Ungültiger Bildindex – Entfernen nicht möglich",
     "removeImageConfirmTitle": "Dieses Bild entfernen?",

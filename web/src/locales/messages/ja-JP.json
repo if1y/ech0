@@ -118,6 +118,7 @@
     "extText": "テキスト",
     "extImage": "画像",
     "extGeneric": "拡張",
+    "extPrivate": "非公開",
     "removeImage": "画像を削除",
     "invalidImageIndex": "画像インデックスが無効です。削除できません！",
     "removeImageConfirmTitle": "この画像を削除しますか？",
