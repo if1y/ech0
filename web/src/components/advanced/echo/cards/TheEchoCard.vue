@@ -14,11 +14,6 @@
           >
             {{ formatDate(props.echo.created_at) }}
           </div>
-          <Lock
-            v-if="userStore.isLogin && props.echo.private"
-            v-tooltip="t('echoCard.privateStatus')"
-            class="w-3 h-3 text-[var(--color-text-muted)] mr-1"
-          />
           <button
             type="button"
             class="echo-open-btn flex items-center justify-center w-6 h-6 rounded-sm text-[var(--color-text-muted)] opacity-0 transition-opacity duration-150 hover:text-[var(--color-text-primary)] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-border-subtle)]"
@@ -40,6 +35,11 @@
       </div>
 
       <div v-else-if="userStore.isLogin" class="relative flex items-center justify-center">
+        <Lock
+          v-if="props.echo.private"
+          v-tooltip="t('echoCard.privateStatus')"
+          class="w-3 h-3 text-[var(--color-text-muted)] mr-1"
+        />
         <button
           ref="menuTriggerRef"
           type="button"
