@@ -267,6 +267,7 @@ export const useEditorStore = defineStore('editorStore', () => {
         echoStore.echoToUpdate.echo_files = echoToAdd.value.echo_files
         echoStore.echoToUpdate.extension = echoToAdd.value.extension
         echoStore.echoToUpdate.tags = echoToAdd.value.tags
+        echoStore.echoToUpdate.created_at = echoToAdd.value.created_at
 
         theToast.promise(fetchUpdateEcho(echoStore.echoToUpdate), {
           loading: justSyncFiles ? t('editor.syncingFiles') : t('editor.updating'),
