@@ -7,6 +7,15 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 For releases prior to v4.6.5, see the [GitHub releases page](https://github.com/lin-snow/Ech0/releases) — earlier release notes are not retroactively imported here.
 
 
+## [5.4.6] - 2026-07-18
+
+A follow-up to 5.4.5's addressing work: the public object URL now follows the same addressing style the SDK uses, so images uploaded to **virtual-hosted-only** services (Tencent COS, Alibaba OSS, …) display instead of appearing broken.
+
+### Fixed
+
+- **Images uploaded to virtual-hosted-only S3 services (Tencent COS, Alibaba OSS, …) now display.** Uploads already succeeded — the SDK addresses those services virtual-hosted style — but when no CDN domain was configured, the public object URL was *always* built in **path-style** shape (`endpoint/bucket/key`), which COS / OSS reject, so every timeline image 404'd while the upload itself looked fine. The public URL now follows the **same addressing the SDK uses**: virtual-hosted (`https://bucket.endpoint/key`) for AWS and `Other`, path-style (`endpoint/bucket/key`) for MinIO / R2 or when the `Other` provider's **Path-style access** toggle is on — the two can no longer drift. So `Other` + COS / OSS works out of the box with no CDN domain (leave Path-style off; set Endpoint to the regional domain without the bucket). Because `File.url` is a snapshot written at upload time, this fixes newly uploaded objects; existing rows keep their stored URL until you re-set the CDN domain or refresh `url`.
+
+
 ## [5.4.5] - 2026-07-18
 
 A small storage-compatibility release: the **Other** S3 provider can now opt into **path-style addressing** from the admin panel, unblocking self-hosted S3-compatible services that don't speak virtual-hosted style.
@@ -598,6 +607,7 @@ This is primarily a security release: six advisories disclosed since v4.7.2 are 
   Practical risk in this repo was negligible (the vulnerable code only runs at PWA build time on developer-controlled input), but the alerts are now resolved at the supply-chain level.
 
 [Unreleased]: https://github.com/lin-snow/Ech0/compare/v5.4.4...HEAD
+[5.4.6]: https://github.com/lin-snow/Ech0/compare/v5.4.5...v5.4.6
 [5.4.5]: https://github.com/lin-snow/Ech0/compare/v5.4.4...v5.4.5
 [5.4.4]: https://github.com/lin-snow/Ech0/compare/v5.4.3...v5.4.4
 [5.4.3]: https://github.com/lin-snow/Ech0/compare/v5.4.2...v5.4.3

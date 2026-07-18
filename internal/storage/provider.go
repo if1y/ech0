@@ -6,6 +6,7 @@ package storage
 import (
 	"context"
 	"log/slog"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -146,12 +147,51 @@ func buildS3PathURLResolver(cfg config.StorageConfig) URLResolver {
 		}
 	}
 
+	// 无 CDN 时直接用 Endpoint 拼直链，寻址方式必须与 SDK 一致（见 addressesPathStyle），
+	// 否则会出现「上传成功、直链却打不开」：virtual-hosted-only 的服务（腾讯 COS、阿里 OSS 等）
+	// 会拒绝 path-style 直链，反之只支持 path-style 的自建服务会拒绝 virtual-hosted 直链。
 	endpoint := normalizeEndpoint(cfg.Endpoint, cfg.UseSSL)
-	baseURL := strings.TrimRight(endpoint, "/") + "/" + cfg.BucketName
+	baseURL := strings.TrimRight(endpoint, "/") + "/" + cfg.BucketName // path-style: endpoint/bucket
+	if !addressesPathStyle(cfg) {
+		if vh, ok := virtualHostedBaseURL(endpoint, cfg.BucketName); ok {
+			baseURL = vh // virtual-hosted: bucket.endpoint
+		}
+		// vh 拼接失败（如 Endpoint 为空的默认 AWS）时回退 path-style 形状，交由 CDN / 代理兜底。
+	}
 	return func(path string) string {
 		clean := strings.Trim(strings.TrimSpace(path), "/")
 		return baseURL + "/" + prefix + clean
 	}
+}
+
+// addressesPathStyle 判定对象访问是否走 path-style 寻址（endpoint/bucket/key）。它与
+// virefsS3ConfigFromStorage 传给 SDK 的寻址方式同源：minio/r2 预设 path-style，aws/other
+// 默认 virtual-hosted，other 可用 UsePathStyle 开关强制 path-style（UsePathStyle 已在
+// normalize 阶段对非 other 归零）。直链拼接靠它跟随 SDK 寻址，避免两者漂移。
+func addressesPathStyle(cfg config.StorageConfig) bool {
+	if cfg.UsePathStyle {
+		return true
+	}
+	switch mapProvider(cfg.Provider) {
+	case virefs.ProviderMinIO, virefs.ProviderR2:
+		return true
+	default:
+		return false
+	}
+}
+
+// virtualHostedBaseURL 把 bucket 前置到已归一化 Endpoint 的 host，得到 virtual-hosted 直链前缀
+// （https://bucket.endpoint）。Endpoint 或 bucket 为空、或无法解析出 host 时返回 ok=false。
+func virtualHostedBaseURL(endpoint, bucket string) (string, bool) {
+	if endpoint == "" || bucket == "" {
+		return "", false
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil || u.Host == "" {
+		return "", false
+	}
+	u.Host = bucket + "." + u.Host
+	return strings.TrimRight(u.String(), "/"), true
 }
 
 func normalizeEndpoint(endpoint string, useSSL bool) string {

@@ -215,7 +215,8 @@ data/files/images/a1b2c3d4_1735689600_deadbeef.png
 | **误以为必须改 `key`** | 一般**不需要**改 `key`；除非你在新桶刻意用了另一套命名，则需同步改库或做映射（项目内无通用映射层）。 |
 | **忽略 `url`** | 界面仍显示旧 CDN 链接或 403；需更新 `url` 或改为使用本站代理 URL。 |
 | **迁移期间双写** | 切换窗口内应避免同一 `key` 在旧桶与新桶被不同版本覆盖；建议维护窗口内只读或停写。 |
-| **`other` 类服务连不上（寻址方式）** | provider 选 `aws` / `minio` / `r2` 时寻址方式由预设决定（minio/r2 为 path-style）；选 **`other`** 默认 virtual-hosted，若目标服务（Ceph、Garage、SeaweedFS 等自建 S3 兼容服务）只支持 path-style，在管理后台打开「Path-Style 访问」开关（或设 `ECH0_S3_USE_PATH_STYLE=true`）。该开关只影响 SDK 的 API 请求寻址，不改变库中直链 `url` 的拼接形状。 |
+| **`other` 类服务连不上（寻址方式）** | provider 选 `aws` / `minio` / `r2` 时寻址方式由预设决定（minio/r2 为 path-style）；选 **`other`** 默认 virtual-hosted，若目标服务（Ceph、Garage、SeaweedFS 等自建 S3 兼容服务）只支持 path-style，在管理后台打开「Path-Style 访问」开关（或设 `ECH0_S3_USE_PATH_STYLE=true`）。 |
+| **上传成功但图片打不开（COS/OSS 直链形状）** | 腾讯 COS、阿里 OSS 等**只接受 virtual-hosted 直链**（`bucket.endpoint/key`）。无 CDN 域名时，Ech0 生成的公开直链会**跟随 SDK 寻址方式**：`other` 默认按 virtual-hosted 拼 `https://bucket.endpoint/key`，开了 Path-Style 开关或 minio/r2 则拼 `endpoint/bucket/key`。因此这类服务保持 `other`、**不要**开 Path-Style 开关即可；Endpoint 填**地域域名**（如 `cos.<region>.myqcloud.com`，不含 bucket）。注意 `File.url` 是**写入时快照**，改配置只影响此后的新上传，存量记录需重刷 `url` 或改填 CDN 域名。 |
 
 ---
 
