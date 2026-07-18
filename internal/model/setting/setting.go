@@ -45,6 +45,9 @@ type S3Setting struct {
 	CDNURL     string `json:"cdn_url"`     // CDN 加速域名（可选，没有就走 Endpoint）
 	PathPrefix string `json:"path_prefix"` // 存储路径前缀，例如 "uploads/"，方便隔离目录
 	PublicRead bool   `json:"public_read"` // 上传时是否默认设置对象为 public-read
+	// UsePathStyle 强制使用 path-style 寻址（endpoint/bucket/key）。仅对 provider="other"
+	// 生效（aws/minio/r2 由 virefs 预设决定），保存时非 other 会被归零。
+	UsePathStyle bool `json:"use_path_style"`
 }
 
 // OAuth2Setting 定义 OAuth2 配置结构体

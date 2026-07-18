@@ -7,6 +7,41 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 For releases prior to v4.6.5, see the [GitHub releases page](https://github.com/lin-snow/Ech0/releases) — earlier release notes are not retroactively imported here.
 
 
+## [5.4.5] - 2026-07-18
+
+A small storage-compatibility release: the **Other** S3 provider can now opt into **path-style addressing** from the admin panel, unblocking self-hosted S3-compatible services that don't speak virtual-hosted style.
+
+### Added
+
+- **A "Path-style access" toggle for the `Other` S3 provider.** Addressing style used to be decided entirely by the provider preset — MinIO and R2 use path-style, AWS uses virtual-hosted — and `Other` silently followed AWS, so a self-hosted S3-compatible service that only supports path-style (Ceph, Garage, SeaweedFS, …) behind a DNS-style endpoint could fail to connect, with no way to fix it. (IP endpoints like `127.0.0.1:9000` were unaffected: the SDK already falls back to path-style for those.) The storage settings panel now shows a **Path-style access** switch when the provider is `Other` — also seedable via `ECH0_S3_USE_PATH_STYLE` — and it applies to every S3 code path: uploads, presigned URLs, the connection probe, and snapshot export. Named providers keep their presets (the toggle is ignored and zeroed on save unless the provider is `Other`), existing `Other` setups keep their current behavior until it's explicitly switched on, and the toggle only changes SDK API requests — stored public URLs keep their shape.
+
+### Internal
+
+- **The storage layer's three S3 client-config construction sites were collapsed into one helper**, so the connection probe, the runtime filesystem, and the storage selector are guaranteed to build the client from identical parameters — what you test is what you run.
+
+
+## [5.4.4] - 2026-07-18
+
+A reliability release centered on the database and on leftover-data hygiene. SQLite now runs in **WAL mode** with tuned connection parameters, and snapshot export packs a **consistent database copy** instead of the live file — together making both day-to-day writes and backups sturdier. Alongside that, two long-standing residue leaks were plugged: deleted Echos no longer strand their extension rows, and direct-link attachments abandoned in a draft no longer linger in the database forever.
+
+### Changed
+
+- **SQLite runs in WAL mode with tuned connection parameters.** The runtime database is now opened with `journal_mode=WAL` (readers and writers no longer block each other), `busy_timeout=5000` (lock contention waits instead of failing with "database is locked"), `synchronous=NORMAL` (the recommended durability level under WAL), and `txlock=immediate` (write transactions take the write lock up front instead of failing on a deferred upgrade). The parameters ride on the DSN, so every pooled connection gets them — both at startup and when the database path is hot-changed. No operator action is required; SQLite switches the journal mode on first open.
+- **Snapshot export packs a consistent database copy, not the live file.** Under WAL, recent writes may still sit in the `-wal` sidecar, and copying the live `ech0.db` under concurrent writes can tear. Every online export path (manual, scheduled, and synchronous download) now produces a consistent copy via `VACUUM INTO` — SQLite's online backup — and packs *that* as `ech0.db`, excluding the live file and its `-wal` / `-shm` / `-journal` sidecars from the archive. A failed copy fails the export instead of silently falling back to the raw file, so a snapshot that exists is a snapshot that restores.
+
+### Fixed
+
+- **Deleting an Echo no longer strands its extension row.** `DeleteEchoById` relied on the schema's `ON DELETE CASCADE` to remove the Echo's extension (website card, video link, GitHub card, …) — which never fires, because SQLite connections default to `foreign_keys=OFF` — so every deleted Echo that carried an extension silently left an orphaned `echo_extensions` row behind. The extension is now deleted explicitly alongside the Echo's files, and a one-shot idempotent migration sweeps out the orphans accumulated by older versions on next startup.
+- **Direct-link attachments abandoned in a draft no longer linger in the database forever** ([#316](https://github.com/lin-snow/Ech0/issues/316)). Uploaded files get a temp-tracking row that the periodic orphan cleanup reaps if the Echo is never published — but direct-link (external URL) attachments never got one, so removing one from a draft with the ✕ button, or closing the browser mid-draft, left its `files` row behind permanently with nothing ever cleaning it up. New external records are now temp-tracked exactly like uploads: publishing the Echo confirms them, and the periodic cleanup reaps the unconfirmed rest. (When the same URL is deduplicated onto an existing record, that record is deliberately *not* re-tracked — it may already back published Echos.)
+- **Failed attachment-blob deletions are now visible in the logs** ([#316](https://github.com/lin-snow/Ech0/issues/316)). When deleting an Echo (or a single file) removed the database record but deleting the stored blob failed, the error was silently swallowed — the blob became an invisible orphan on disk or in the bucket. Both paths now warn-log the file key and storage type, so operators can spot and reclaim leftovers.
+
+### Internal
+
+- **Event-bus shutdown stats no longer undercount.** Busen's shutdown "before" snapshot is now taken ahead of closing the publish gate, so executions completing in the gap between the two are counted in the drain delta; the racy drain-stats test was restructured to synchronize on `ErrClosed` instead of racing the worker.
+- **Dependency bumps (Go, `go-patch-minor` group, 13 updates)**: `anthropics/anthropic-sdk-go` 1.56.0 → 1.57.0, `aws-sdk-go-v2/service/s3` 1.104.2 → 1.105.0 (plus `config` / `credentials` patch bumps), `coreos/go-oidc` 3.19.0 → 3.20.0, `dgraph-io/ristretto` 2.4.0 → 2.4.2, `go-co-op/gocron` 2.21.2 → 2.22.0, `wneessen/go-mail` 0.8.0 → 0.8.1, and `golang.org/x/{crypto,mod,net,sync,text}` patch bumps.
+- **Dependency bumps (`web/`)**: `unocss` / `@unocss/preset-wind4` 66.7.4 → 66.7.5, `prettier` 3.9.4 → 3.9.5, `tsx` 4.23.0 → 4.23.1.
+
+
 ## [5.4.3] - 2026-07-12
 
 A storage-compatibility hotfix. `aws-sdk-go-v2`'s newer S3 default started sending `aws-chunked` trailer checksums that every S3-compatible backend other than real AWS rejects — this release turns that off wherever it doesn't belong, restoring uploads and snapshot export on R2, MinIO, Backblaze, Ceph, and other compatible stores.
@@ -562,7 +597,13 @@ This is primarily a security release: six advisories disclosed since v4.7.2 are 
 
   Practical risk in this repo was negligible (the vulnerable code only runs at PWA build time on developer-controlled input), but the alerts are now resolved at the supply-chain level.
 
-[Unreleased]: https://github.com/lin-snow/Ech0/compare/v5.3.0...HEAD
+[Unreleased]: https://github.com/lin-snow/Ech0/compare/v5.4.4...HEAD
+[5.4.5]: https://github.com/lin-snow/Ech0/compare/v5.4.4...v5.4.5
+[5.4.4]: https://github.com/lin-snow/Ech0/compare/v5.4.3...v5.4.4
+[5.4.3]: https://github.com/lin-snow/Ech0/compare/v5.4.2...v5.4.3
+[5.4.2]: https://github.com/lin-snow/Ech0/compare/v5.4.1...v5.4.2
+[5.4.1]: https://github.com/lin-snow/Ech0/compare/v5.4.0...v5.4.1
+[5.4.0]: https://github.com/lin-snow/Ech0/compare/v5.3.0...v5.4.0
 [5.3.0]: https://github.com/lin-snow/Ech0/compare/v5.2.5...v5.3.0
 [5.2.5]: https://github.com/lin-snow/Ech0/compare/v5.2.4...v5.2.5
 [5.2.4]: https://github.com/lin-snow/Ech0/compare/v5.2.3...v5.2.4

@@ -11,6 +11,10 @@
   也是导入的源（导出的快照可经 `ech0` 源往返导入）。资源代码在
   `internal/migrator/snapshot`（`writer.go` 打包 / `Unpack` 解包 / `reader.go` 定位 / `s3.go` 上传与保留），
   无 DI 依赖。
+- **数据库一致性副本**：在线导出（fs/s3 exporter）必须以 `snapshot.WithConsistentDB(database.SnapshotTo)`
+  调用 `Create`——用 `VACUUM INTO` 产出一致性时点副本打入 zip，并排除运行中的 `ech0.db` 及
+  `-wal`/`-shm`/`-journal` 伴生文件（带并发写入直接拷实时库文件可能撕裂）。副本写不出来时导出必须
+  失败而非静默回退。不带该选项的 `Create`（冷目录打包）保持原样带走全部文件。
 - **对称的适配器族**（`internal/migrator`）：
   - `spec.Importer{Import}` 与 `spec.Exporter{Export}` 两个对称接口；
   - 导入按「来源」：`importer/ech0`、`importer/memos`（占位）；

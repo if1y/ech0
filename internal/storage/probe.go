@@ -29,14 +29,7 @@ func probeS3(ctx context.Context, cfg config.StorageConfig) error {
 		return errBucketRequired
 	}
 
-	client, err := virefs.NewS3Client(ctx, &virefs.S3Config{
-		Provider:  mapProvider(cfg.Provider),
-		Endpoint:  normalizeEndpoint(cfg.Endpoint, cfg.UseSSL),
-		Region:    resolveObjectRegion(cfg.Provider, cfg.Region),
-		Bucket:    cfg.BucketName,
-		AccessKey: cfg.AccessKey,
-		SecretKey: cfg.SecretKey,
-	})
+	client, err := virefs.NewS3Client(ctx, virefsS3ConfigFromStorage(cfg))
 	if err != nil {
 		return err
 	}

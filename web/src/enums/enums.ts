@@ -47,7 +47,7 @@ export enum S3Provider {
   TENCENT = 'tencent',
   MINIO = 'minio',
   R2 = 'r2',
-  OTHER = 'other', // 其它默认按照 MINIO 处理
+  OTHER = 'other', // 其它默认按 AWS（virtual-hosted）寻址，可用 use_path_style 强制 path-style
 }
 
 // OAuth2 Provider

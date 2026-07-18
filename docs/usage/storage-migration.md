@@ -215,6 +215,7 @@ data/files/images/a1b2c3d4_1735689600_deadbeef.png
 | **误以为必须改 `key`** | 一般**不需要**改 `key`；除非你在新桶刻意用了另一套命名，则需同步改库或做映射（项目内无通用映射层）。 |
 | **忽略 `url`** | 界面仍显示旧 CDN 链接或 403；需更新 `url` 或改为使用本站代理 URL。 |
 | **迁移期间双写** | 切换窗口内应避免同一 `key` 在旧桶与新桶被不同版本覆盖；建议维护窗口内只读或停写。 |
+| **`other` 类服务连不上（寻址方式）** | provider 选 `aws` / `minio` / `r2` 时寻址方式由预设决定（minio/r2 为 path-style）；选 **`other`** 默认 virtual-hosted，若目标服务（Ceph、Garage、SeaweedFS 等自建 S3 兼容服务）只支持 path-style，在管理后台打开「Path-Style 访问」开关（或设 `ECH0_S3_USE_PATH_STYLE=true`）。该开关只影响 SDK 的 API 请求寻址，不改变库中直链 `url` 的拼接形状。 |
 
 ---
 

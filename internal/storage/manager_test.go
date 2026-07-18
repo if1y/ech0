@@ -20,14 +20,15 @@ func TestStorageConfigFromSetting(t *testing.T) {
 		SecretKey: "env-sk-must-be-ignored",
 	}
 	s3 := settingModel.S3Setting{
-		Enable:     true,
-		Provider:   "aws",
-		Endpoint:   "https://s3.amazonaws.com",
-		BucketName: "db-bucket",
-		Region:     "us-east-1",
-		UseSSL:     true,
-		CDNURL:     "https://cdn.example.com/",
-		PathPrefix: "uploads/",
+		Enable:       true,
+		Provider:     "aws",
+		Endpoint:     "https://s3.amazonaws.com",
+		BucketName:   "db-bucket",
+		Region:       "us-east-1",
+		UseSSL:       true,
+		CDNURL:       "https://cdn.example.com/",
+		PathPrefix:   "uploads/",
+		UsePathStyle: true,
 		// AccessKey / SecretKey intentionally empty.
 	}
 
@@ -53,6 +54,9 @@ func TestStorageConfigFromSetting(t *testing.T) {
 	}
 	if cfg.DataRoot != "data/files" {
 		t.Fatalf("expected DataRoot carried from defaultCfg, got %s", cfg.DataRoot)
+	}
+	if !cfg.UsePathStyle {
+		t.Fatalf("expected UsePathStyle carried from setting")
 	}
 	// Core behavior change: S3 fields come from the setting only. Empty setting
 	// fields stay empty — config/env is no longer a per-field fallback.

@@ -320,7 +320,21 @@ func (s *FileService) CreateExternalFile(
 		Height:      dto.Height,
 		UserID:      user.ID,
 	}
+	nowUTC := time.Now().UTC()
 	if err := s.fileRepository.Create(context.Background(), fileRecord); err != nil {
+		return commonModel.FileDto{}, err
+	}
+	// External records have no stored object, so nothing else keeps them alive:
+	// without a temp tracking row an abandoned draft reference would linger in
+	// the files table forever. Publish confirms it away like any upload; the
+	// dedup-reuse branch above must NOT create one, or an expiring temp row
+	// could reap a record already referenced by published echos.
+	if err := s.fileRepository.CreateTemp(context.Background(), &fileModel.TempFile{
+		FileID:     fileRecord.ID,
+		UploaderID: user.ID,
+		ExpireAt:   nowUTC.Add(tempFileTTL).Unix(),
+	}); err != nil {
+		_ = s.fileRepository.Delete(context.Background(), fileRecord.ID)
 		return commonModel.FileDto{}, err
 	}
 
@@ -362,7 +376,15 @@ func (s *FileService) DeleteFile(ctx context.Context, id string) error {
 		return err
 	}
 	if storage.NormalizeStorageType(fileRecord.StorageType) != storage.StorageTypeExternal {
-		_ = s.DeleteStoredFile(fileRecord.StorageType, fileRecord.Key)
+		if err := s.DeleteStoredFile(fileRecord.StorageType, fileRecord.Key); err != nil {
+			logUtil.GetLogger().Warn(
+				"Failed to delete stored file after removing file record",
+				slog.String("file_id", fileRecord.ID),
+				slog.String("file_key", fileRecord.Key),
+				slog.String("storage_type", fileRecord.StorageType),
+				logUtil.Err(err),
+			)
+		}
 	}
 	return nil
 }

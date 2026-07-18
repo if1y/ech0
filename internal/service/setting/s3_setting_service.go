@@ -143,17 +143,18 @@ func normalizeS3SettingDto(newSetting *model.S3SettingDto) model.S3Setting {
 	}
 
 	s3Setting := model.S3Setting{
-		Enable:     newSetting.Enable,
-		Provider:   newSetting.Provider,
-		Endpoint:   urlUtil.TrimURL(endpoint),
-		AccessKey:  newSetting.AccessKey,
-		SecretKey:  newSetting.SecretKey,
-		BucketName: newSetting.BucketName,
-		Region:     strings.TrimSpace(newSetting.Region),
-		UseSSL:     useSSL,
-		CDNURL:     cdnURL,
-		PathPrefix: urlUtil.TrimURL(newSetting.PathPrefix),
-		PublicRead: newSetting.PublicRead,
+		Enable:       newSetting.Enable,
+		Provider:     newSetting.Provider,
+		Endpoint:     urlUtil.TrimURL(endpoint),
+		AccessKey:    newSetting.AccessKey,
+		SecretKey:    newSetting.SecretKey,
+		BucketName:   newSetting.BucketName,
+		Region:       strings.TrimSpace(newSetting.Region),
+		UseSSL:       useSSL,
+		CDNURL:       cdnURL,
+		PathPrefix:   urlUtil.TrimURL(newSetting.PathPrefix),
+		PublicRead:   newSetting.PublicRead,
+		UsePathStyle: newSetting.UsePathStyle,
 	}
 
 	// 配置检查：按 provider 补齐 region 默认值
@@ -177,6 +178,12 @@ func normalizeS3SettingDto(newSetting *model.S3SettingDto) model.S3Setting {
 			s3Setting.Region = "auto"
 		}
 	default:
+	}
+
+	// path-style 开关仅对 other 生效：aws/minio/r2 的寻址方式由 virefs 预设决定，
+	// 归零可避免切换 provider 后残留的 true 不可见地强制 path-style。
+	if s3Setting.Provider != string(commonModel.OTHER) {
+		s3Setting.UsePathStyle = false
 	}
 
 	return s3Setting

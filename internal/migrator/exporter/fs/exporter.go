@@ -9,6 +9,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/lin-snow/ech0/internal/database"
 	"github.com/lin-snow/ech0/internal/migrator/snapshot"
 	"github.com/lin-snow/ech0/internal/migrator/spec"
 	migratorModel "github.com/lin-snow/ech0/internal/model/migrator"
@@ -22,7 +23,8 @@ func New() *Exporter {
 
 func (e *Exporter) Export(_ context.Context, req spec.ExportRequest) (spec.ExportResult, error) {
 	emit(req, migratorModel.ExportPhasePacking)
-	path, fileName, err := snapshot.Create()
+	// 导出发生在运行中的实例上,必须用 VACUUM INTO 产出的一致性副本代替实时库文件。
+	path, fileName, err := snapshot.Create(snapshot.WithConsistentDB(database.SnapshotTo))
 	if err != nil {
 		return spec.ExportResult{}, err
 	}

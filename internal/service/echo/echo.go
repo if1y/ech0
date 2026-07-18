@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -171,7 +172,15 @@ func (echoService *EchoService) DeleteEchoById(ctx context.Context, id string) e
 	eventbus.Notify(context.Background(), echoService.bus, event.EchoDeleted{Echo: model.Echo{ID: id}, User: user})
 
 	for _, file := range deletableFiles {
-		_ = echoService.fileService.DeleteStoredFile(file.storageType, file.key)
+		if err := echoService.fileService.DeleteStoredFile(file.storageType, file.key); err != nil {
+			logUtil.GetLogger().Warn(
+				"delete stored file after echo delete failed",
+				slog.String("echo_id", id),
+				slog.String("file_key", file.key),
+				slog.String("storage_type", file.storageType),
+				logUtil.Err(err),
+			)
+		}
 	}
 
 	return nil

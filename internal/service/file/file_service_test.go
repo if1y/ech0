@@ -328,8 +328,12 @@ func TestFileService_CreateExternalFile(t *testing.T) {
 		assert.Equal(t, "https://example.com/pic.png", dto.URL)
 		assert.True(t, strings.HasPrefix(dto.Key, "external/image/"))
 		assert.Equal(t, int64(1), countFiles(t, fix.db))
+		// A fresh external record is temp-tracked so an abandoned draft
+		// reference gets reaped by CleanupOrphanFiles instead of lingering.
+		assert.Equal(t, int64(1), countTemps(t, fix.db))
 
-		// Identical URL is deduplicated to the existing row.
+		// Identical URL is deduplicated to the existing row; the reused row must
+		// NOT gain a second temp record (it may already back published echos).
 		again, err := fix.svc.CreateExternalFile(fix.adminCtx(), commonModel.CreateExternalFileDto{
 			URL:      "https://example.com/pic.png",
 			Category: "image",
@@ -337,6 +341,7 @@ func TestFileService_CreateExternalFile(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, dto.ID, again.ID)
 		assert.Equal(t, int64(1), countFiles(t, fix.db))
+		assert.Equal(t, int64(1), countTemps(t, fix.db))
 	})
 
 	t.Run("omitted category normalizes to file", func(t *testing.T) {
@@ -939,5 +944,20 @@ func TestFileService_CleanupOrphanFiles(t *testing.T) {
 		assert.Equal(t, int64(1), countFiles(t, fix.db))
 		assert.Equal(t, int64(1), countTemps(t, fix.db))
 		assert.True(t, storedExists(t, fix.mgr, dto.Key))
+	})
+
+	t.Run("deletes expired unconfirmed external record", func(t *testing.T) {
+		fix := newFileFix(t)
+		fix.expectAdmin()
+		dto, err := fix.svc.CreateExternalFile(fix.adminCtx(), commonModel.CreateExternalFileDto{
+			URL:      "https://example.com/orphan.png",
+			Category: "image",
+		})
+		require.NoError(t, err)
+		expireTemp(t, fix, dto.ID)
+
+		require.NoError(t, fix.svc.CleanupOrphanFiles())
+		assert.Equal(t, int64(0), countFiles(t, fix.db))
+		assert.Equal(t, int64(0), countTemps(t, fix.db))
 	})
 }

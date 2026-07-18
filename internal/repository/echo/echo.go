@@ -162,6 +162,12 @@ func (echoRepository *EchoRepository) DeleteEchoById(ctx context.Context, id str
 	var echo model.Echo
 	echoRepository.getDB(ctx).Where("echo_id = ?", id).Delete(&fileModel.EchoFile{})
 
+	// echo_extensions 的 ON DELETE CASCADE 依赖 SQLite 的 foreign_keys 开关,
+	// 连接默认不启用,必须与 echo_files 一样手动级联删除,否则留下孤儿行。
+	if err := echoRepository.getDB(ctx).Where("echo_id = ?", id).Delete(&model.EchoExtension{}).Error; err != nil {
+		return err
+	}
+
 	result := echoRepository.getDB(ctx).Where("id = ?", id).Delete(&echo)
 	if result.Error != nil {
 		return result.Error

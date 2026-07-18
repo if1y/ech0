@@ -58,6 +58,7 @@ export const useSettingStore = defineStore('settingStore', () => {
     cdn_url: '',
     path_prefix: '',
     public_read: true,
+    use_path_style: false,
   })
   const OAuth2Setting = ref<App.Api.Setting.OAuth2Setting>({
     enable: false,

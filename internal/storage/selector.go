@@ -316,23 +316,13 @@ func buildOptionalObjectFSAndResolver(
 		return nil, nil, nil, false
 	}
 
-	provider := mapProvider(cfg.Provider)
-	region := resolveObjectRegion(cfg.Provider, cfg.Region)
 	var opts []virefs.ObjectOption
 	if cfg.PathPrefix != "" {
 		opts = append(opts, virefs.WithPrefix(strings.Trim(cfg.PathPrefix, "/")+"/"))
 	}
 	opts = append(opts, virefs.WithObjectKeyFunc(schema.Resolve))
 
-	endpoint := normalizeEndpoint(cfg.Endpoint, cfg.UseSSL)
-	fs, err := virefs.NewObjectFSFromConfig(context.Background(), &virefs.S3Config{
-		Provider:  provider,
-		Endpoint:  endpoint,
-		Region:    region,
-		Bucket:    cfg.BucketName,
-		AccessKey: cfg.AccessKey,
-		SecretKey: cfg.SecretKey,
-	}, opts...)
+	fs, err := virefs.NewObjectFSFromConfig(context.Background(), virefsS3ConfigFromStorage(cfg), opts...)
 	if err != nil {
 		return nil, nil, nil, false
 	}

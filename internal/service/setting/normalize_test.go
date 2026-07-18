@@ -18,13 +18,14 @@ import (
 // TestNormalizeS3SettingDto 覆盖 SSL 推导、协议头剥离、CDN 末尾斜杠、按 provider 补齐 region。
 func TestNormalizeS3SettingDto(t *testing.T) {
 	cases := []struct {
-		name       string
-		in         model.S3SettingDto
-		wantSSL    bool
-		wantEnd    string
-		wantRegion string
-		wantCDN    string
-		wantPrefix string
+		name          string
+		in            model.S3SettingDto
+		wantSSL       bool
+		wantEnd       string
+		wantRegion    string
+		wantCDN       string
+		wantPrefix    string
+		wantPathStyle bool
 	}{
 		{
 			name:       "https endpoint forces ssl and strips scheme",
@@ -63,6 +64,21 @@ func TestNormalizeS3SettingDto(t *testing.T) {
 			wantCDN:    "https://cdn.example.com",
 			wantPrefix: "uploads",
 		},
+		{
+			name:          "other provider keeps use_path_style",
+			in:            model.S3SettingDto{Provider: string(commonModel.OTHER), Endpoint: "s3.selfhosted.example", UsePathStyle: true},
+			wantSSL:       false,
+			wantEnd:       "s3.selfhosted.example",
+			wantRegion:    "auto",
+			wantPathStyle: true,
+		},
+		{
+			name:       "non-other provider zeroes use_path_style",
+			in:         model.S3SettingDto{Provider: string(commonModel.MINIO), Endpoint: "http://minio.local:9000", UsePathStyle: true},
+			wantSSL:    false,
+			wantEnd:    "minio.local:9000",
+			wantRegion: "us-east-1",
+		},
 	}
 
 	for _, tc := range cases {
@@ -73,6 +89,7 @@ func TestNormalizeS3SettingDto(t *testing.T) {
 			assert.Equal(t, tc.wantRegion, got.Region, "Region")
 			assert.Equal(t, tc.wantCDN, got.CDNURL, "CDNURL")
 			assert.Equal(t, tc.wantPrefix, got.PathPrefix, "PathPrefix")
+			assert.Equal(t, tc.wantPathStyle, got.UsePathStyle, "UsePathStyle")
 			// 透传字段保持原值。
 			assert.Equal(t, tc.in.Provider, got.Provider)
 		})

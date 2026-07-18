@@ -77,6 +77,36 @@ func buildGormConfig(logLevel logger.LogLevel) *gorm.Config {
 	}
 }
 
+// sqliteConnParams 是统一追加在 DSN 上的连接参数（mattn/go-sqlite3 形式）。
+// 必须放在 DSN 而非 Open 后 Exec PRAGMA：busy_timeout / synchronous / txlock
+// 都是单连接属性，只有 DSN 参数才能覆盖连接池里的每一条连接。
+//   - _journal_mode=WAL：读写互不阻塞（持久化在库文件上）；
+//   - _busy_timeout=5000：锁冲突时等待重试，而不是立刻报 database is locked；
+//   - _synchronous=NORMAL：WAL 下的推荐档位，保证崩溃一致性；
+//   - _txlock=immediate：写事务开始即持写锁，避免 deferred 事务升级写锁失败。
+const sqliteConnParams = "_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL&_txlock=immediate"
+
+// openSQLite 以统一的连接参数打开运行库。InitDatabase 与 HotChangeDatabase 共用，
+// 保证热切换后的新连接与启动时行为一致。
+func openSQLite(dbPath string, logLevel logger.LogLevel) (*gorm.DB, error) {
+	return gorm.Open(sqlite.Open(dbPath+"?"+sqliteConnParams), buildGormConfig(logLevel))
+}
+
+// configLogLevel 按配置解析 GORM 日志级别。
+func configLogLevel() logger.LogLevel {
+	if config.Config().Database.LogMode == "release" {
+		return logger.Silent
+	}
+	return logger.Error
+}
+
+// SnapshotTo 用 SQLite 官方在线备份语句 VACUUM INTO 把当前库写出一份一致性时点副本。
+// 不阻塞并发读写，产出为独立单文件（不依赖 -wal/-shm 伴生文件），供快照导出打包。
+// dstPath 指向的文件不能已存在（VACUUM INTO 语义）。
+func SnapshotTo(dstPath string) error {
+	return GetDB().Exec("VACUUM INTO ?", dstPath).Error
+}
+
 // InitDatabase 初始化数据库连接
 func InitDatabase() {
 	// 读取数据库类型和保存路径
@@ -92,15 +122,10 @@ func InitDatabase() {
 	}
 
 	if dbType == "sqlite" {
-		var err error
-		ll := logger.LogLevel(logger.Error)
-		if config.Config().Database.LogMode == "release" {
-			ll = logger.LogLevel(logger.Silent)
-		}
 		// 注册 sqlite-vec 为进程级自动扩展：之后所有新建的 sqlite 连接（含热切换）
 		// 都会自动加载 vec0 虚表能力，无需自定义 driver / ConnectHook。
 		sqlite_vec.Auto()
-		SQLiteDB, err := gorm.Open(sqlite.Open(dbPath), buildGormConfig(ll))
+		SQLiteDB, err := openSQLite(dbPath, configLogLevel())
 		if err != nil {
 			util.HandlePanicError(&commonModel.ServerError{
 				Msg: commonModel.INIT_DATABASE_PANIC,
@@ -134,6 +159,7 @@ func InitDatabase() {
 			// 本地密码迁入 user_local_auth：回填必须先于删列。
 			dbMigration.NewUserLocalAuthBackfillMigrator(),
 			dbMigration.NewUsersPasswordDropMigrator(),
+			dbMigration.NewEchoExtensionOrphansMigrator(),
 		),
 	)
 }
@@ -181,12 +207,7 @@ func HotChangeDatabase(newDBPath string) error {
 	}
 
 	// 打开新连接
-	ll := logger.LogLevel(logger.Error)
-	if config.Config().Database.LogMode == "release" {
-		ll = logger.LogLevel(logger.Silent)
-	}
-
-	newDB, err := gorm.Open(sqlite.Open(newDBPath), buildGormConfig(ll))
+	newDB, err := openSQLite(newDBPath, configLogLevel())
 	if err != nil {
 		return err
 	}

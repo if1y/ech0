@@ -1,10 +1,6 @@
 {
   "instances": [
     {
-      "id": "abao",
-      "url": "https://bk.abao.ad"
-    },
-    {
       "id": "abloom-echo",
       "url": "https://memo.abloom.site"
     },
@@ -27,6 +23,10 @@
     {
       "id": "ciraos",
       "url": "https://ech0.ciraos.top"
+    },
+    {
+      "id": "echorizon",
+      "url": "https://holymypo.damnb.qzz.io"
     },
     {
       "id": "galaha",
@@ -75,6 +75,10 @@
     {
       "id": "xiaoten",
       "url": "https://echo.xiaoten.com"
+    },
+    {
+      "id": "zhangjwchn-blog",
+      "url": "https://blog.zhangjw.cn"
     }
   ]
 }

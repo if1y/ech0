@@ -73,17 +73,18 @@ var (
 		Default: func() settingModel.S3Setting {
 			c := config.Config().Storage
 			return settingModel.S3Setting{
-				Enable:     c.ObjectEnabled,
-				Provider:   strings.TrimSpace(c.Provider),
-				Endpoint:   stripScheme(strings.TrimSpace(c.Endpoint)),
-				AccessKey:  c.AccessKey,
-				SecretKey:  c.SecretKey,
-				BucketName: c.BucketName,
-				Region:     strings.TrimSpace(c.Region),
-				UseSSL:     c.UseSSL,
-				CDNURL:     strings.TrimRight(strings.TrimSpace(c.CDNURL), "/"),
-				PathPrefix: strings.Trim(strings.TrimSpace(c.PathPrefix), "/"),
-				PublicRead: true,
+				Enable:       c.ObjectEnabled,
+				Provider:     strings.TrimSpace(c.Provider),
+				Endpoint:     stripScheme(strings.TrimSpace(c.Endpoint)),
+				AccessKey:    c.AccessKey,
+				SecretKey:    c.SecretKey,
+				BucketName:   c.BucketName,
+				Region:       strings.TrimSpace(c.Region),
+				UseSSL:       c.UseSSL,
+				CDNURL:       strings.TrimRight(strings.TrimSpace(c.CDNURL), "/"),
+				PathPrefix:   strings.Trim(strings.TrimSpace(c.PathPrefix), "/"),
+				PublicRead:   true,
+				UsePathStyle: c.UsePathStyle,
 			}
 		},
 	}

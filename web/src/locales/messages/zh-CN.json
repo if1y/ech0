@@ -582,6 +582,8 @@
     "enableS3": "启用S3存储",
     "enableSsl": "启用SSL",
     "s3Provider": "S3 服务",
+    "usePathStyle": "Path-Style 访问",
+    "usePathStyleHint": "以 endpoint/bucket/key 形式访问对象（MinIO 类自建服务通常需要开启）",
     "endpoint": "S3 Endpoint",
     "endpointPlaceholder": "S3 Endpoint地址",
     "accessKey": "Access Key",

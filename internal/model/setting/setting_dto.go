@@ -34,6 +34,8 @@ type S3SettingDto struct {
 	CDNURL     string `json:"cdn_url"`     // CDN 加速域名（可选，没有就走 Endpoint）
 	PathPrefix string `json:"path_prefix"` // 存储路径前缀，例如 "uploads/"，方便隔离目录
 	PublicRead bool   `json:"public_read"` // 上传时是否默认设置对象为 public-read
+	// UsePathStyle 强制使用 path-style 寻址，仅对 provider="other" 生效。
+	UsePathStyle bool `json:"use_path_style"`
 }
 
 type OAuth2SettingDto struct {

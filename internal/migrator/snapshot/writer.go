@@ -6,13 +6,15 @@
 // 只依赖 virefs 与配置,可被无 DI 的 CLI 直接调用。
 //
 // 快照格式即「data/ 的 zip」(排除 snapshots/、tmp/)。数据库文件名固定为 ech0.db
-// (见 config 默认),导入端在 ech0 importer 中定位。
+// (见 config 默认),导入端在 ech0 importer 中定位。在线导出时应通过 WithConsistentDB
+// 打入数据库的一致性副本(见其注释),冷目录打包则原样带走全部文件。
 package snapshot
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -34,12 +36,38 @@ const (
 	tmpRelativeDir      = "files/tmp"
 	snapshotFileName    = "ech0_snapshot"
 	timeLayout          = "2006-01-02_15-04-05"
+	// dbFileName 是快照内数据库文件的固定名称(与 config 默认的 data/ech0.db 对应)。
+	dbFileName = "ech0.db"
+	// dbStagingRelativeDir 是数据库一致性副本的暂存目录,位于 tmp 下(tmp 本身被快照排除)。
+	dbStagingRelativeDir = "files/tmp/db-export"
 )
+
+// CreateOption 调整 Create 的打包行为。
+type CreateOption func(*createConfig)
+
+type createConfig struct {
+	dbCopy func(dstPath string) error
+}
+
+// WithConsistentDB 注册「把数据库一致性副本写到指定路径」的函数(线上即 database.SnapshotTo)。
+// 设置后,Create 不再直接拷贝运行中的 ech0.db 及其伴生文件(-wal/-shm/-journal)——带着并发
+// 写入直接拷实时库文件可能得到撕裂状态——而是把该副本以 ech0.db 之名打进 zip。
+// 未设置时保持原样打包:冷目录场景下 db 与伴生文件一起原样带走本就是一致的。
+func WithConsistentDB(copyFn func(dstPath string) error) CreateOption {
+	return func(cfg *createConfig) {
+		cfg.dbCopy = copyFn
+	}
+}
 
 // Create packs the data/ directory into a zip snapshot using VireFS and returns
 // the path and file name of the produced archive. It excludes the snapshots/ and
 // tmp/ subtrees and keeps only the latest snapshot locally.
-func Create() (string, string, error) {
+func Create(opts ...CreateOption) (string, string, error) {
+	var cfg createConfig
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	snapshotTime := time.Now().UTC().Format(timeLayout)
 	fileName := fmt.Sprintf("%s_%s.zip", snapshotFileName, snapshotTime)
 	snapshotDir := filepath.Join(dataDir, snapshotRelativeDir)
@@ -53,6 +81,16 @@ func Create() (string, string, error) {
 	dataFS, err := virefs.NewLocalFS(dataDir)
 	if err != nil {
 		return "", "", fmt.Errorf("open data dir: %w", err)
+	}
+
+	packFS := virefs.FS(dataFS)
+	if cfg.dbCopy != nil {
+		stageFS, cleanup, stageErr := stageConsistentDB(cfg.dbCopy)
+		if stageErr != nil {
+			return "", "", stageErr
+		}
+		defer cleanup()
+		packFS = &dbOverlayFS{FS: dataFS, stage: stageFS}
 	}
 
 	ctx := context.Background()
@@ -71,10 +109,17 @@ func Create() (string, string, error) {
 		if shouldExcludeFromSnapshot(cleanKey) {
 			return nil
 		}
+		if cfg.dbCopy != nil && isDBArtifact(cleanKey) {
+			return nil
+		}
 		keys = append(keys, cleanKey)
 		return nil
 	}); err != nil {
 		return "", "", fmt.Errorf("walk data dir: %w", err)
+	}
+	if cfg.dbCopy != nil {
+		// 实时库文件已从 walk 中排除,此处以固定名打入一致性副本(由 dbOverlayFS 路由)。
+		keys = append(keys, dbFileName)
 	}
 
 	f, err := os.Create(tempPath)
@@ -82,7 +127,7 @@ func Create() (string, string, error) {
 		return "", "", fmt.Errorf("create zip file: %w", err)
 	}
 
-	if err := vizip.Pack(ctx, dataFS, keys, f); err != nil {
+	if err := vizip.Pack(ctx, packFS, keys, f); err != nil {
 		if closeErr := f.Close(); closeErr != nil {
 			logUtil.GetLogger().Warn("Failed to close snapshot zip after pack error",
 				slog.String("path", tempPath), slog.String("error", closeErr.Error()))
@@ -163,6 +208,63 @@ func Unpack(zipPath, destDir string) error {
 	}
 
 	return vizip.Unpack(context.Background(), f, info.Size(), dstFS, "")
+}
+
+// stageConsistentDB 让 copyFn 把数据库一致性副本写到 tmp 下的暂存目录,返回以该目录
+// 为根的 FS(供打包时顶替实时库文件)和清理函数。副本写不出来时导出必须失败——
+// 静默回退去拷实时库文件会产出一份可能缺数据的「坏快照」。
+func stageConsistentDB(copyFn func(dstPath string) error) (virefs.FS, func(), error) {
+	stagingDir := filepath.Join(dataDir, dbStagingRelativeDir)
+	if err := os.RemoveAll(stagingDir); err != nil {
+		return nil, nil, fmt.Errorf("clean db staging dir: %w", err)
+	}
+	if err := os.MkdirAll(stagingDir, 0o755); err != nil {
+		return nil, nil, fmt.Errorf("create db staging dir: %w", err)
+	}
+	cleanup := func() { _ = os.RemoveAll(stagingDir) }
+
+	if err := copyFn(filepath.Join(stagingDir, dbFileName)); err != nil {
+		cleanup()
+		return nil, nil, fmt.Errorf("write consistent db copy: %w", err)
+	}
+
+	stageFS, err := virefs.NewLocalFS(stagingDir)
+	if err != nil {
+		cleanup()
+		return nil, nil, fmt.Errorf("open db staging dir: %w", err)
+	}
+	return stageFS, cleanup, nil
+}
+
+// isDBArtifact 识别运行中数据库的主文件及其伴生文件(-wal/-shm/-journal)。
+// 仅在启用一致性副本时排除;冷目录打包时它们本就该原样带走。
+func isDBArtifact(cleanKey string) bool {
+	switch cleanKey {
+	case dbFileName, dbFileName + "-wal", dbFileName + "-shm", dbFileName + "-journal":
+		return true
+	}
+	return false
+}
+
+// dbOverlayFS 在打包视图中把数据库文件的读取路由到暂存的一致性副本,其余 key 透传底层
+// data FS。vizip.Pack 只使用 Get/Stat,故仅覆盖这两个方法。
+type dbOverlayFS struct {
+	virefs.FS
+	stage virefs.FS
+}
+
+func (o *dbOverlayFS) Get(ctx context.Context, key string) (io.ReadCloser, error) {
+	if key == dbFileName {
+		return o.stage.Get(ctx, dbFileName)
+	}
+	return o.FS.Get(ctx, key)
+}
+
+func (o *dbOverlayFS) Stat(ctx context.Context, key string) (*virefs.FileInfo, error) {
+	if key == dbFileName {
+		return o.stage.Stat(ctx, dbFileName)
+	}
+	return o.FS.Stat(ctx, key)
 }
 
 func shouldExcludeFromSnapshot(cleanKey string) bool {

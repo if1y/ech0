@@ -105,6 +105,8 @@ const (
 	OAuthBindingsDroppedKey = "oauth_bindings_dropped_v1"
 	// LegacyInboxesDroppedKey 是已废弃的 inboxes 表清理迁移的幂等标记键
 	LegacyInboxesDroppedKey = "legacy_inboxes_dropped_v1"
+	// EchoExtensionOrphansCleanedKey 是 echo_extensions 孤儿行清理迁移的幂等标记键
+	EchoExtensionOrphansCleanedKey = "echo_extension_orphans_cleaned_v1"
 	// AgentProtocolCollapsedKey 是 Agent 协议枚举从 7 项收敛为 3 项的幂等标记键
 	AgentProtocolCollapsedKey = "agent_provider_collapsed_v1"
 	// AgentSettingProtocolRenamedKey 是把 agent_setting JSON 里 "provider" 字段重命名为 "protocol" 的幂等标记键

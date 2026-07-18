@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/lin-snow/ech0/internal/config"
 	logUtil "github.com/lin-snow/ech0/pkg/log"
 	"github.com/lin-snow/ech0/pkg/virefs"
@@ -45,7 +46,7 @@ func virefsS3Config(cfg config.StorageConfig) *virefs.S3Config {
 	provider := mapS3Provider(cfg.Provider)
 	region := resolveS3Region(cfg.Provider, cfg.Region)
 	endpoint := normalizeS3Endpoint(cfg.Endpoint, cfg.UseSSL)
-	return &virefs.S3Config{
+	s3cfg := &virefs.S3Config{
 		Provider:  provider,
 		Endpoint:  endpoint,
 		Region:    region,
@@ -53,6 +54,12 @@ func virefsS3Config(cfg config.StorageConfig) *virefs.S3Config {
 		AccessKey: cfg.AccessKey,
 		SecretKey: cfg.SecretKey,
 	}
+	// 仅在 true 时设指针：virefs 只在 UsePathStyle 为 nil 时应用 minio/r2 的
+	// path-style 预设，无条件传 aws.Bool(false) 会把预设击穿。
+	if cfg.UsePathStyle {
+		s3cfg.UsePathStyle = aws.Bool(true)
+	}
+	return s3cfg
 }
 
 // UploadToS3 uploads the local snapshot ZIP to S3 at snapshots/<fileName>,

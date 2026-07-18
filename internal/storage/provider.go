@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/google/wire"
 	"github.com/lin-snow/ech0/internal/config"
 	"github.com/lin-snow/ech0/internal/kvstore"
@@ -81,30 +82,38 @@ func buildLocalPathURLResolver() URLResolver {
 }
 
 func buildS3FS(cfg config.StorageConfig, schema *virefs.Schema) virefs.FS {
-	provider := mapProvider(cfg.Provider)
-	region := resolveObjectRegion(cfg.Provider, cfg.Region)
-
 	var opts []virefs.ObjectOption
 	if cfg.PathPrefix != "" {
 		opts = append(opts, virefs.WithPrefix(strings.Trim(cfg.PathPrefix, "/")+"/"))
 	}
 	opts = append(opts, virefs.WithObjectKeyFunc(schema.Resolve))
 
-	endpoint := normalizeEndpoint(cfg.Endpoint, cfg.UseSSL)
-
-	fs, err := virefs.NewObjectFSFromConfig(context.Background(), &virefs.S3Config{
-		Provider:  provider,
-		Endpoint:  endpoint,
-		Region:    region,
-		Bucket:    cfg.BucketName,
-		AccessKey: cfg.AccessKey,
-		SecretKey: cfg.SecretKey,
-	}, opts...)
+	fs, err := virefs.NewObjectFSFromConfig(context.Background(), virefsS3ConfigFromStorage(cfg), opts...)
 	if err != nil {
 		logUtil.Warn("create s3 fs failed, fallback to local", slog.String("module", "storage"), logUtil.Err(err))
 		return buildLocalFS(cfg, schema)
 	}
 	return fs
+}
+
+// virefsS3ConfigFromStorage 把操作用 StorageConfig 归一化为 virefs.S3Config，
+// buildS3FS / probeS3 / buildOptionalObjectFSAndResolver 共用同一套参数，
+// 保证「测的就是会用的」。
+func virefsS3ConfigFromStorage(cfg config.StorageConfig) *virefs.S3Config {
+	s3cfg := &virefs.S3Config{
+		Provider:  mapProvider(cfg.Provider),
+		Endpoint:  normalizeEndpoint(cfg.Endpoint, cfg.UseSSL),
+		Region:    resolveObjectRegion(cfg.Provider, cfg.Region),
+		Bucket:    cfg.BucketName,
+		AccessKey: cfg.AccessKey,
+		SecretKey: cfg.SecretKey,
+	}
+	// 仅在 true 时设指针：virefs 只在 UsePathStyle 为 nil 时应用 minio/r2 的
+	// path-style 预设，无条件传 aws.Bool(false) 会把预设击穿。
+	if cfg.UsePathStyle {
+		s3cfg.UsePathStyle = aws.Bool(true)
+	}
+	return s3cfg
 }
 
 func buildS3URLResolver(cfg config.StorageConfig, schema *virefs.Schema) URLResolver {

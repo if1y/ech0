@@ -582,6 +582,8 @@
     "enableS3": "S3-Speicher aktivieren",
     "enableSsl": "SSL aktivieren",
     "s3Provider": "S3-Anbieter",
+    "usePathStyle": "Path-Style-Zugriff",
+    "usePathStyleHint": "Objekte als endpoint/bucket/key ansprechen (bei selbst gehosteten MinIO-ähnlichen Diensten meist erforderlich)",
     "endpoint": "S3-Endpoint",
     "endpointPlaceholder": "S3-Endpoint-URL",
     "accessKey": "Access Key",

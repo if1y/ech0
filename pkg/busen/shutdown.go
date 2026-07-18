@@ -50,9 +50,13 @@ func (b *Bus) Shutdown(ctx context.Context, mode ShutdownMode) (ShutdownResult, 
 		ctx = context.Background()
 	}
 
+	// before 快照必须先于 gate.Close()：这样发布方一旦观察到 ErrClosed，快照必然已拍下，
+	// 此后完成的 handler 执行都会计入增量（反过来的顺序会漏计 Close 与快照之间完成的执行，
+	// 外部也没有任何时点可以确认快照已生效）。权威订阅列表 subs 仍在 Close 之后取才完备；
+	// 夹缝中新增的订阅不在 before 里，applyStatsDelta 对其按零基线计入，语义无损。
+	before := snapshotSubscriptionStats(b.allSubscriptions())
 	b.gate.Close()
 	subs := b.allSubscriptions()
-	before := snapshotSubscriptionStats(subs)
 
 	if err := b.gate.Wait(ctx); err != nil {
 		result.Completed = false

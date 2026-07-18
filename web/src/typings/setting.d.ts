@@ -36,6 +36,7 @@ declare namespace App {
         cdn_url: string
         path_prefix: string
         public_read: boolean
+        use_path_style: boolean
       }
 
       type OAuth2Setting = {

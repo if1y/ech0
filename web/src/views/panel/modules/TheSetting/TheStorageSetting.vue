@@ -51,6 +51,20 @@
         />
       </div>
 
+      <!-- Path-Style 寻址（仅 Other 提供商可选，aws/minio/r2 由预设决定） -->
+      <div
+        v-if="S3Setting.provider === S3Provider.OTHER"
+        class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] h-10"
+      >
+        <h2
+          v-tooltip="t('storageSetting.usePathStyleHint')"
+          class="font-semibold min-w-30 w-max shrink-0 whitespace-nowrap"
+        >
+          {{ t('storageSetting.usePathStyle') }}:
+        </h2>
+        <BaseSwitch v-model="S3Setting.use_path_style" :disabled="!storageEditMode" />
+      </div>
+
       <!-- S3 Endpoint -->
       <div
         class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 h-10"

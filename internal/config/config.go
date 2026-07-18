@@ -46,6 +46,7 @@ type StorageConfig struct {
 	Region        string `env:"ECH0_S3_REGION"`
 	Provider      string `env:"ECH0_S3_PROVIDER"` // "aws", "r2", "minio", "other"
 	UseSSL        bool   `env:"ECH0_S3_USE_SSL"`
+	UsePathStyle  bool   `env:"ECH0_S3_USE_PATH_STYLE"` // force path-style addressing (endpoint/bucket/key)
 	CDNURL        string `env:"ECH0_S3_CDN_URL"`
 	PathPrefix    string `env:"ECH0_S3_PATH_PREFIX"`
 }

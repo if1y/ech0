@@ -582,6 +582,8 @@
     "enableS3": "S3 ストレージを有効化",
     "enableSsl": "SSL を有効化",
     "s3Provider": "S3 プロバイダ",
+    "usePathStyle": "Path-Style アクセス",
+    "usePathStyleHint": "endpoint/bucket/key 形式でオブジェクトにアクセスします（MinIO 系のセルフホストサービスでは通常必要）",
     "endpoint": "S3 Endpoint",
     "endpointPlaceholder": "S3 Endpoint URL",
     "accessKey": "Access Key",

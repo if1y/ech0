@@ -1205,10 +1205,32 @@ func TestShutdownDrainReturnsStructuredStats(t *testing.T) {
 		t.Fatalf("third publish error = %v, want ErrDropped", err)
 	}
 
+	// Shutdown 与 handler 放行的顺序必须受控：先让 Shutdown 拍下 before 快照，再放行
+	// handler，两条在途事件的执行才保证落在快照之后、计入 Processed 增量（反之 worker
+	// 会抢在快照前处理完，增量恒为 0）。同步依据：Publish 返回 ErrClosed 发生在快照
+	// 之后（见 Shutdown 实现），轮询到 ErrClosed 即可安全放行。
+	var (
+		result      ShutdownResult
+		shutdownErr error
+	)
+	shutdownDone := make(chan struct{})
+	go func() {
+		defer close(shutdownDone)
+		result, shutdownErr = bus.Shutdown(context.Background(), ShutdownDrain)
+	}()
+
+	pollDeadline := time.Now().Add(5 * time.Second)
+	for !errors.Is(Publish(context.Background(), bus, 99), ErrClosed) {
+		if time.Now().After(pollDeadline) {
+			t.Fatal("timed out waiting for bus gate to close")
+		}
+		runtime.Gosched()
+	}
 	close(release)
-	result, err := bus.Shutdown(context.Background(), ShutdownDrain)
-	if err != nil {
-		t.Fatalf("Shutdown() error = %v", err)
+	<-shutdownDone
+
+	if shutdownErr != nil {
+		t.Fatalf("Shutdown() error = %v", shutdownErr)
 	}
 	if !result.Completed {
 		t.Fatalf("Completed = false, want true")
