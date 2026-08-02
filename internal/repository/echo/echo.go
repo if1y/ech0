@@ -401,7 +401,10 @@ func (echoRepository *EchoRepository) QueryEchos(
 				Where("echo_tags.tag_id IN ?", queryDto.TagIDs)
 		}
 		if !showPrivate {
+			// 无私密可见权限：强制仅公开，dto.Private 被静默忽略（防泄漏兜底）。
 			db = db.Where("echos.private = ?", false)
+		} else if queryDto.Private != nil {
+			db = db.Where("echos.private = ?", *queryDto.Private)
 		}
 		if queryDto.UserID != "" {
 			db = db.Where("echos.user_id = ?", queryDto.UserID)

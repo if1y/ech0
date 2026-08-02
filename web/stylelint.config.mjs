@@ -5,7 +5,16 @@ export default {
     'stylelint-config-recommended-vue/scss',
   ],
   overrides: [
-    { files: ['**/*.vue'], customSyntax: 'postcss-html' },
+    {
+      files: ['**/*.vue'],
+      customSyntax: 'postcss-html',
+      rules: {
+        // stylelint 17.14.1 起 no-invalid-position-declaration 会对模板内联
+        // style="…" 属性误报（postcss-html 解析的裸声明本就没有规则上下文）。
+        // 仅对 .vue 关闭；.css/.scss 仍保留该规则。
+        'no-invalid-position-declaration': null,
+      },
+    },
     { files: ['**/*.scss'], customSyntax: 'postcss-scss' },
   ],
   rules: {

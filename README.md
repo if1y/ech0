@@ -98,13 +98,14 @@ See [Quick Deployment](./DEPLOYMENT.md#quick-deployment) for Docker Compose and 
 - 🚀 **Fast Deployment Experience**: Out-of-the-box Docker deployment from install to first run with a single command.
 - 📦 **Self-Contained Distribution**: Complete binaries and container images, with no extra runtime dependencies.
 - 💻 **Cross-Platform Support**: Supports Linux, Windows, and ARM devices (for example, Raspberry Pi).
+- 🧳 **Portable Content Capsules**: Export everything you have written as a self-contained [capsule](./docs/usage/capsule.md), import it into another instance, or compile it into a static site you can host anywhere.
 
 ### Storage & Data
 
 - 🗂️ **VireFS Unified Storage Layer**: Uses **VireFS** to unify mounting and management for local storage and S3-compatible object storage.
 - ☁️ **S3 Object Storage Support**: Native support for S3-compatible object storage for cloud resource expansion.
 - 📦 **Data Sovereignty**: Content and metadata remain user-owned and user-controlled, with RSS output support.
-- 🔄 **Data Migration Workflow**: Supports migration import for historical data and snapshot export for migration and archiving.
+- 🔄 **Data Migration Workflow**: Supports migration import for historical data, plus snapshot and capsule export for migration and archiving, from both the dashboard and the CLI.
 - 🔐 **Automated Backup System**: Supports export/backup via Web, CLI, and TUI, plus background automatic backups.
 
 ### Writing & Content

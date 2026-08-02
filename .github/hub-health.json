@@ -1,6 +1,10 @@
 {
+  "airtouch": {
+    "url": "https://mm.airtouch.top",
+    "unhealthy_since": "2026-08-02T02:02:32.089Z"
+  },
   "liushen": {
     "url": "https://mm.liushen.fun",
-    "unhealthy_since": "2026-07-18T01:49:12.055Z"
+    "unhealthy_since": "2026-08-02T02:02:32.089Z"
   }
 }

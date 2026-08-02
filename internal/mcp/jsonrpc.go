@@ -31,4 +31,9 @@ const (
 	ErrCodeMethodNotFound = -32601
 	ErrCodeInvalidParams  = -32602
 	ErrCodeInternal       = -32603
+
+	// Codes -32020..-32099 are reserved for the MCP specification
+	// (2026-07-28). Only spec-defined codes may be emitted from this range.
+	ErrCodeHeaderMismatch             = -32020
+	ErrCodeUnsupportedProtocolVersion = -32022
 )

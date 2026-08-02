@@ -258,6 +258,9 @@
     "downloadFailed": "ダウンロードに失敗しました",
     "downloadFailedResponse": "ダウンロード失敗：サーバーから不正な応答が返されました"
   },
+  "staticSite": {
+    "likeUnavailable": "これは静的アーカイブのため、いいねはできません。"
+  },
   "auth": {
     "loginSuccess": "ログインしました。おかえりなさい！🎉",
     "signupSuccess": "登録が完了しました。ログインしてください！"
@@ -399,6 +402,11 @@
     "dateRangeLast7Days": "直近 7 日",
     "dateRangeLast30Days": "直近 30 日",
     "dateRangeThisYear": "今年",
+    "visibilityLabel": "公開範囲",
+    "visibilityAll": "すべて",
+    "visibilityPublic": "公開のみ",
+    "visibilityPrivate": "非公開のみ",
+    "activeChipVisibilityPrefix": "公開範囲",
     "tagsLabel": "タグ",
     "tagsHint": "いずれか一致",
     "tagsEmpty": "タグがありません",
@@ -678,13 +686,20 @@
   },
   "exportSetting": {
     "title": "データエクスポート",
-    "description": "現在のシステムスナップショットをエクスポートします。オフラインアーカイブや移行に便利です。",
+    "description": "エクスポート形式を選択：インスタンスのバックアップか、コンテンツの持ち出しか。",
     "exportSnapshot": "スナップショットをエクスポート",
+    "exportCapsule": "カプセルをエクスポート",
+    "formatSnapshotTitle": "スナップショット",
+    "formatSnapshotDesc": "完全バックアップ。アカウントと認証情報を含む",
+    "formatCapsuleTitle": "カプセル",
+    "formatCapsuleDesc": "コンテンツのみ。共有や静的サイト生成に",
+    "includePrivate": "非公開コンテンツを含める",
     "loginRequired": "ログインしてから利用してください",
     "exporting": "エクスポート中...少々お待ちください",
     "exportStarted": "エクスポートを開始しました！",
     "exportFailed": "エクスポートに失敗しました",
     "jobTitle": "スナップショットの出力",
+    "jobTitleCapsule": "カプセルの出力",
     "artifactLabel": "成果物",
     "redownload": "再ダウンロード"
   },
@@ -851,7 +866,7 @@
   },
   "migrationSetting": {
     "title": "データインポート",
-    "description": "Ech0 v4、Memos からのインポートに対応します。",
+    "description": "Ech0 v4、Memos、Ech0 カプセルからのインポートに対応します。",
     "inDevelopment": "開発中",
     "sourceZip": "ソース zip",
     "pickZip": "zip ファイルを選択",
@@ -892,6 +907,10 @@
     "cleaned": "移行レコードをクリーンアップしました",
     "sourceEch0": "Ech0 からのインポートに対応",
     "sourceMemos": "Memos 対応（開発中）",
+    "sourceCapsuleTitle": "Ech0 カプセル",
+    "sourceCapsule": "Ech0 カプセルからのインポートに対応",
+    "capsuleNote": "追記インポート。id で重複を除き、既存データを上書きしません",
+    "capsuleIncludePrivate": "非公開コンテンツを含める",
     "statusIdle": "アイドル",
     "statusPending": "待機中",
     "statusRunning": "移行中",
@@ -1140,6 +1159,8 @@
     "importPhaseLoading": "書込",
     "importPhaseReporting": "集計",
     "importPhaseCompleted": "完了",
+    "importPhaseChecking": "検証",
+    "importPhaseImporting": "取込",
     "exportPhasePending": "準備",
     "exportPhasePacking": "圧縮",
     "exportPhaseCompleted": "完了"

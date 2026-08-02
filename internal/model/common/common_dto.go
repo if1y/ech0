@@ -26,6 +26,10 @@ type EchoQueryDto struct {
 	// 0 或负数视为未设置。
 	DateFrom int64 `json:"dateFrom"`
 	DateTo   int64 `json:"dateTo"`
+	// Private：按可见性过滤的三态开关。nil 表示不过滤（现状行为：admin 公开+私密
+	// 混合，匿名仅公开）；true 仅私密、false 仅公开。仅当 viewer 具备私密可见权限
+	// （admin）时生效，无权限的请求在仓储层被静默忽略、仍强制仅公开。
+	Private *bool `json:"private,omitempty"`
 	// UserID：按作者（echos.user_id）精确过滤。opt-in——空串表示不限定作者
 	// （公开 /echo/query 等调用方留空即保持原行为）；Copilot Chat 用它把检索
 	// 收口到当前对话用户本人发布的 Echo。不暴露给前端 JSON 契约，仅服务内部设置。

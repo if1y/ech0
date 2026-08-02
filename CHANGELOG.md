@@ -7,6 +7,39 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 For releases prior to v4.6.5, see the [GitHub releases page](https://github.com/lin-snow/Ech0/releases) — earlier release notes are not retroactively imported here.
 
 
+## [Unreleased]
+
+## [5.5.0] - 2026-08-02
+
+Ech0 gets a way out. **Capsules** turn everything you have written into a self-contained
+folder of markdown and media that you can read, keep, hand to another instance, or compile
+into a static site — from the dashboard or the terminal.
+
+### Added
+
+- **Capsule: a portable, human-readable format for your content — plus a one-command static site.** Four new CLI commands ship together. `ech0 export capsule` writes your instance to a plain directory (or `--zip`): one frontmatter-markdown file per echo, a `comments.yaml` snapshot, `ech0.yaml` for site info, and the media bytes laid out exactly as they are on disk — S3-hosted files are pulled down so the capsule is always self-contained (if any byte can't be fetched the export fails loudly rather than producing a capsule with holes). `ech0 import capsule` merges one back **idempotently**: echoes are matched by id and skipped if they already exist, values land 1:1 with no conversion, and nothing is ever overwritten. `ech0 check` validates a capsule with errors/warnings and can `--fix` missing ids. `ech0 build` compiles a capsule into a static, read-only site that reuses the real Ech0 frontend — no Node or pnpm needed, the assets are embedded in the binary — ready to drop on GitHub Pages or Cloudflare Pages, with likes and comments shown frozen and read-only. The format is a published spec, so hand-writing a capsule or converting from another tool is supported. See [`docs/usage/capsule.md`](docs/usage/capsule.md).
+- **Capsules are now available from the dashboard, not just the CLI.** *Panel → Data management* gains a format choice on **Export** — *Snapshot* (the default) or *Capsule* — and a third source card on **Import**, *Ech0 Capsule*. The two formats are deliberately not presented as interchangeable: the snapshot card states that it is a full backup containing accounts and credentials and is the only format that can restore an instance, while picking Capsule surfaces a warning that it carries no accounts or credentials and cannot be used for disaster recovery, plus an opt-in *Include private content* switch (off by default). Importing a capsule is append-only and idempotent — entries are matched by id, so re-importing the same capsule creates nothing new and never wipes or overwrites what you already have — and validation runs first, refusing to write anything if the capsule has errors. Downloads always point at whatever the job actually produced, even if you flip the selector afterwards. Capsule artifacts live in `data/files/capsules/`, kept separate from snapshots so the two can't delete each other, and excluded from snapshots so backups don't swallow them. The CLI commands are unchanged; both routes drive the same engine.
+- **`ech0 export snapshot` / `ech0 import snapshot` are now available from the CLI.** The full-instance backup and restore that previously existed only as a dashboard job can now be driven from a terminal or a cron entry. Restoring is destructive and requires an explicit `--yes`.
+- **Quick search can now filter by visibility (public / private).** The command palette (⌘K) gains a three-state **Visibility** section — *All*, *Public only*, *Private only* — shown only to logged-in admins; anonymous visitors don't see it and the timeline behaves exactly as before. An active filter shows up as a clearable chip next to the search box, like date-range and tag filters. Server-side, `POST /api/echo/query` accepts an optional `private` boolean; requests without private-content permission have it silently ignored and keep getting public-only results, so nothing can leak.
+
+### Changed
+
+- **`ech0 version` and the other CLI result boxes were restyled.** The box used to run its heading and its numbers through one `label: value` formatter, so the leading emoji sat in the label column and pushed that row out of line with everything under it. Headings now sit on their own line and the figures below them line up in a column.
+
+## [5.4.7] - 2026-07-31
+
+> Recorded retroactively: v5.4.7 was tagged and published without its CHANGELOG section.
+
+### Changed
+
+- **Built-in MCP server upgraded to protocol revision `2026-07-28`** (latest MCP spec, replacing `2025-11-25`) — **breaking for legacy MCP clients**. The server is now stateless per the new spec: the `initialize` handshake is gone (replaced by `server/discover`), every request must carry `params._meta` protocol metadata plus the `MCP-Protocol-Version` / `Mcp-Method` / `Mcp-Name` headers (validated with HTTP 400 + `-32020`/`-32022` on mismatch), unknown methods return HTTP 404, results carry `resultType` and `_meta.serverInfo`, and discover/list/read results include cache hints (`ttlMs` + `cacheScope`). `GET /mcp` (old status endpoint) and `DELETE /mcp` now return 405. Clients must speak `2026-07-28` — official SDKs (TypeScript v2, Go v1.7+, Python, C# v2) handle this automatically; legacy `initialize` clients receive a diagnostic naming the supported version.
+
+- **Dependency bumps (Go, `go-patch-minor` group)**: `anthropics/anthropic-sdk-go` 1.57.0 → 1.61.0, `aws/aws-sdk-go-v2` 1.42.1 → 1.43.0 (plus `config` / `credentials` / `service/s3` patch bumps), `aws/smithy-go` 1.27.3 → 1.27.4, `danielgtaylor/huma/v2` 2.38.0 → 2.39.0.
+- **Dependency bumps (`web/`)**: `pinia` 3.0.4 → 4.0.2 — a technical-only major (ESM-only build, and `@vue/devtools-api` became a required peer dependency, now declared explicitly in `package.json`); `vue` 3.5.39 → 3.5.40, `vue-i18n` 11.4.6 → 11.4.8, `vue-router` 5.1.0 → 5.2.0, plus dev-tooling minors (`vite` 8.1.5, `eslint` 10.8.0, `eslint-plugin-vue` 10.10.0, `prettier` 3.9.6, `stylelint` 17.14.1, `vite-plugin-vue-devtools` 8.2.1, `vue-tsc` 3.3.8, `@vitejs/plugin-vue` 6.0.8).
+- **Dependency bumps (`hub/`)**: `brace-expansion` 2.1.1 → 2.1.2 — lockfile-only security backport for [CVE-2026-13149](https://github.com/juliangruber/brace-expansion/pull/123).
+- **Dependency bumps (CI)**: `actions/setup-node` 6 → 7, `actions/setup-go` 6 → 7.
+
+
 ## [5.4.6] - 2026-07-18
 
 A follow-up to 5.4.5's addressing work: the public object URL now follows the same addressing style the SDK uses, so images uploaded to **virtual-hosted-only** services (Tencent COS, Alibaba OSS, …) display instead of appearing broken.
@@ -606,7 +639,9 @@ This is primarily a security release: six advisories disclosed since v4.7.2 are 
 
   Practical risk in this repo was negligible (the vulnerable code only runs at PWA build time on developer-controlled input), but the alerts are now resolved at the supply-chain level.
 
-[Unreleased]: https://github.com/lin-snow/Ech0/compare/v5.4.4...HEAD
+[Unreleased]: https://github.com/lin-snow/Ech0/compare/v5.5.0...HEAD
+[5.5.0]: https://github.com/lin-snow/Ech0/compare/v5.4.7...v5.5.0
+[5.4.7]: https://github.com/lin-snow/Ech0/compare/v5.4.6...v5.4.7
 [5.4.6]: https://github.com/lin-snow/Ech0/compare/v5.4.5...v5.4.6
 [5.4.5]: https://github.com/lin-snow/Ech0/compare/v5.4.4...v5.4.5
 [5.4.4]: https://github.com/lin-snow/Ech0/compare/v5.4.3...v5.4.4

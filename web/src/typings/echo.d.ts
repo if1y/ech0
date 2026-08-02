@@ -26,6 +26,9 @@ declare namespace App {
         search?: string
       }
 
+      /** 可见性过滤三态（仅 admin 生效；'all' 不下发 private 参数） */
+      type EchoVisibilityFilter = 'all' | 'public' | 'private'
+
       type EchoQueryParams = {
         page: number
         pageSize: number
@@ -36,6 +39,8 @@ declare namespace App {
         /** 按 created_at 过滤的闭区间，单位 Unix 秒 */
         dateFrom?: number
         dateTo?: number
+        /** 可见性过滤：true 仅私密、false 仅公开、缺省不过滤。非 admin 请求被服务端忽略 */
+        private?: boolean
       }
 
       type Echo = {

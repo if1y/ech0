@@ -97,13 +97,14 @@ Weitere Optionen wie Docker Compose und Helm findest du unter [Schnelles Deploym
 - 🚀 **Schnelles Deployment**: Out-of-the-box-Docker-Deployment, von der Installation bis zum ersten Start mit einem einzigen Befehl.
 - 📦 **Eigenständige Distribution**: Vollständige Binaries und Container-Images ohne zusätzliche Laufzeitabhängigkeiten.
 - 💻 **Plattformübergreifend**: Unterstützt Linux, Windows und ARM-Geräte (z. B. Raspberry Pi).
+- 🧳 **Portable Inhaltskapseln**: Exportieren Sie alles Geschriebene als eigenständige [Kapsel](./docs/usage/capsule.md), importieren Sie sie in eine andere Instanz oder bauen Sie daraus eine statische Seite für beliebiges Hosting.
 
 ### Speicher & Daten
 
 - 🗂️ **VireFS Unified Storage Layer**: **VireFS** vereinheitlicht das Mounten und die Verwaltung von lokalem Speicher und S3-kompatiblem Object Storage.
 - ☁️ **S3-Object-Storage-Unterstützung**: Native Unterstützung für S3-kompatiblen Object Storage zur Erweiterung in die Cloud.
 - 📦 **Datensouveränität**: Inhalte und Metadaten bleiben in Nutzerhand und unter Nutzerkontrolle, inklusive RSS-Ausgabe.
-- 🔄 **Datenmigrations-Workflow**: Migrationsimport für historische Daten und Snapshot-Export für Migration und Archivierung.
+- 🔄 **Datenmigrations-Workflow**: Migrationsimport für historische Daten sowie Snapshot- und Kapsel-Export für Migration und Archivierung, aus dem Dashboard und über die CLI.
 - 🔐 **Automatisiertes Backup-System**: Export/Backup über Web, CLI und TUI sowie automatische Hintergrund-Backups.
 
 ### Schreiben & Inhalt

@@ -134,6 +134,35 @@
               </div>
             </section>
 
+            <section v-if="canFilterVisibility" class="palette__section">
+              <header class="palette__section-header">
+                <span class="palette__section-label">{{
+                  t('commandPalette.visibilityLabel')
+                }}</span>
+                <button
+                  v-if="draftVisibility !== 'all'"
+                  type="button"
+                  class="palette__section-action"
+                  @click="draftVisibility = 'all'"
+                >
+                  {{ t('commandPalette.reset') }}
+                </button>
+              </header>
+              <div class="palette__preset-row">
+                <button
+                  v-for="option in visibilityOptions"
+                  :key="option.key"
+                  type="button"
+                  class="palette__pill"
+                  :class="{ 'palette__pill--active': draftVisibility === option.key }"
+                  @mousedown.prevent
+                  @click="draftVisibility = option.key"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </section>
+
             <section class="palette__section">
               <header class="palette__section-header">
                 <span class="palette__section-label">
@@ -218,7 +247,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { useEchoStore } from '@/stores'
+import { useEchoStore, useUserStore } from '@/stores'
 import Close from '@/components/icons/close.vue'
 import Search from '@/components/icons/search.vue'
 
@@ -232,14 +261,27 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const echoStore = useEchoStore()
-const { searchValue, dateFrom, dateTo, selectedTagIds, tagList, isFilteringMode, filteredTag } =
-  storeToRefs(echoStore)
+const userStore = useUserStore()
+const {
+  searchValue,
+  dateFrom,
+  dateTo,
+  selectedTagIds,
+  tagList,
+  isFilteringMode,
+  filteredTag,
+  visibilityFilter,
+} = storeToRefs(echoStore)
+
+// 可见性过滤仅对具备私密可见权限的 admin 展示；未登录/非 admin 不渲染该段。
+const canFilterVisibility = computed(() => userStore.isLogin && userStore.user?.is_admin === true)
 
 // 草稿状态：Apply 前不写入 store，便于取消
 const draftKeyword = ref<string>('')
 const draftFrom = ref<number | null>(null)
 const draftTo = ref<number | null>(null)
 const draftTagIds = ref<string[]>([])
+const draftVisibility = ref<App.Api.Ech0.EchoVisibilityFilter>('all')
 const keywordInputRef = ref<HTMLInputElement | null>(null)
 const showAllTags = ref<boolean>(false)
 const visibleTagLimit = 12
@@ -271,6 +313,12 @@ const presets = computed(() => [
   { key: 'last7', label: t('commandPalette.dateRangeLast7Days') },
   { key: 'last30', label: t('commandPalette.dateRangeLast30Days') },
   { key: 'thisYear', label: t('commandPalette.dateRangeThisYear') },
+])
+
+const visibilityOptions = computed(() => [
+  { key: 'all' as const, label: t('commandPalette.visibilityAll') },
+  { key: 'public' as const, label: t('commandPalette.visibilityPublic') },
+  { key: 'private' as const, label: t('commandPalette.visibilityPrivate') },
 ])
 
 const activePreset = computed<string | null>(() => {
@@ -383,6 +431,7 @@ const isDraftDirty = computed(() => {
   if (trimmed !== (searchValue.value ?? '')) return true
   if (draftFrom.value !== dateFrom.value) return true
   if (draftTo.value !== dateTo.value) return true
+  if (draftVisibility.value !== visibilityFilter.value) return true
   if (!arraysEqualAsSet(draftTagIds.value, currentTagDraftFromStore())) return true
   return false
 })
@@ -392,6 +441,7 @@ const isDraftActive = computed(
     draftKeyword.value.trim().length > 0 ||
     draftFrom.value !== null ||
     draftTo.value !== null ||
+    draftVisibility.value !== 'all' ||
     draftTagIds.value.length > 0,
 )
 
@@ -399,6 +449,7 @@ const activeFilterCount = computed(() => {
   let n = 0
   if (draftKeyword.value.trim().length > 0) n += 1
   if (draftFrom.value !== null || draftTo.value !== null) n += 1
+  if (draftVisibility.value !== 'all') n += 1
   if (draftTagIds.value.length > 0) n += draftTagIds.value.length
   return n
 })
@@ -407,6 +458,7 @@ const syncDraftFromStore = () => {
   draftKeyword.value = searchValue.value ?? ''
   draftFrom.value = dateFrom.value
   draftTo.value = dateTo.value
+  draftVisibility.value = visibilityFilter.value
   draftTagIds.value = currentTagDraftFromStore()
 }
 
@@ -419,9 +471,10 @@ const handleApply = () => {
   const keywordChanged = trimmed !== (searchValue.value ?? '')
   const fromChanged = draftFrom.value !== dateFrom.value
   const toChanged = draftTo.value !== dateTo.value
+  const visibilityChanged = draftVisibility.value !== visibilityFilter.value
   const tagsChanged = !arraysEqualAsSet(draftTagIds.value, currentTagDraftFromStore())
 
-  if (!keywordChanged && !fromChanged && !toChanged && !tagsChanged) {
+  if (!keywordChanged && !fromChanged && !toChanged && !visibilityChanged && !tagsChanged) {
     close()
     return
   }
@@ -429,6 +482,7 @@ const handleApply = () => {
   echoStore.searchValue = trimmed
   echoStore.dateFrom = draftFrom.value
   echoStore.dateTo = draftTo.value
+  echoStore.visibilityFilter = draftVisibility.value
 
   // 面板统一接管 tag 过滤：apply 后 selectedTagIds 是唯一来源，
   // tap-filter 状态一律清空，避免 UI 里出现重复 chip。
@@ -451,6 +505,7 @@ const handleReset = () => {
   draftKeyword.value = ''
   draftFrom.value = null
   draftTo.value = null
+  draftVisibility.value = 'all'
   draftTagIds.value = []
 }
 

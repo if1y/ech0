@@ -65,9 +65,9 @@ Ech0 的 MCP 端点采用 **Streamable HTTP**（JSON-RPC over HTTP），与 [MCP
 ## MCP Endpoint
 
 - **地址**：`/mcp`（复用主服务端口，默认 6277）
-- **协议**：MCP Streamable HTTP（JSON-RPC 2.0 over HTTP POST）
-- **GET /mcp**：返回服务状态信息
-- **POST /mcp**：处理 JSON-RPC 请求
+- **协议**：MCP Streamable HTTP（JSON-RPC 2.0 over HTTP POST，协议版本 `2026-07-28`）
+- **POST /mcp**：处理 JSON-RPC 请求（唯一入口）
+- **GET / DELETE /mcp**：返回 405（新版协议为无状态 POST-only，旧版的 GET 状态查询已移除）
 
 ## 能力总览
 
@@ -160,34 +160,57 @@ Ech0 的 MCP 端点采用 **Streamable HTTP**（JSON-RPC over HTTP），与 [MCP
 
 ## 协议兼容
 
-- 协议版本：`2025-11-25`
-- 支持方法：`initialize`、`tools/list`、`tools/call`、`resources/list`、`resources/read`
-- 传输方式：Streamable HTTP（与 MCP 规范一致）
+- 协议版本：`2026-07-28`（MCP 最新正式版；**不再支持** `2025-11-25` 及更早的 `initialize` 握手时代协议）
+- 支持方法：`server/discover`、`tools/list`、`tools/call`、`resources/list`、`resources/read`
+- 传输方式：Streamable HTTP（与 MCP 规范一致，无会话、无 `Mcp-Session-Id`）
+
+2026-07-28 是无状态协议：没有 `initialize` 握手，每个请求都要自带协议元数据。客户端必须：
+
+1. 在请求体 `params._meta` 中携带 `io.modelcontextprotocol/protocolVersion: "2026-07-28"`；
+2. 携带 `MCP-Protocol-Version: 2026-07-28` 请求头（必须与 body 一致，否则 HTTP 400 + `-32020`）；
+3. 携带 `Mcp-Method` 请求头（与 body 的 `method` 一致）；
+4. `tools/call` / `resources/read` 还需携带 `Mcp-Name` 请求头（与 `params.name` / `params.uri` 一致，非 ASCII 安全值用 `=?base64?…?=` 编码）。
+
+不受支持的协议版本会返回 HTTP 400 + `-32022`（`data.supported` 中列出支持的版本）；旧版客户端发送的 `initialize` 会返回 HTTP 404 + `-32601`，错误信息中会注明本服务支持的版本。所有成功结果都带 `resultType: "complete"` 与 `_meta` 中的 serverInfo；`server/discover`、`tools/list`、`resources/list`、`resources/read` 结果还带缓存提示（`ttlMs` + `cacheScope`）。
+
+使用官方 SDK（TypeScript v2 / Go v1.7+ / Python / C# v2 等支持 `2026-07-28` 的版本）时以上头与 `_meta` 均由 SDK 自动处理，无需手工构造。
 
 ## 示例：使用 curl 测试
 
 ```bash
-# Initialize
+META='"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28"}'
+
+# Discover（查询服务器支持的协议版本与能力）
 curl -X POST http://localhost:6277/mcp \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
+  -H "MCP-Protocol-Version: 2026-07-28" \
+  -H "Mcp-Method: server/discover" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{'"$META"'}}'
 
 # List tools
 curl -X POST http://localhost:6277/mcp \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+  -H "MCP-Protocol-Version: 2026-07-28" \
+  -H "Mcp-Method: tools/list" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{'"$META"'}}'
 
 # Search posts
 curl -X POST http://localhost:6277/mcp \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"search_posts","arguments":{"query":"hello","page":1,"page_size":10}}}'
+  -H "MCP-Protocol-Version: 2026-07-28" \
+  -H "Mcp-Method: tools/call" \
+  -H "Mcp-Name: search_posts" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"search_posts","arguments":{"query":"hello","page":1,"page_size":10},'"$META"'}}'
 
 # Create a post
 curl -X POST http://localhost:6277/mcp \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_post","arguments":{"content":"Hello from MCP!","tags":["mcp","test"]}}}'
+  -H "MCP-Protocol-Version: 2026-07-28" \
+  -H "Mcp-Method: tools/call" \
+  -H "Mcp-Name: create_post" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"create_post","arguments":{"content":"Hello from MCP!","tags":["mcp","test"]},'"$META"'}}'
 ```

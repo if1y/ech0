@@ -54,32 +54,25 @@ func DoServeWithBlock() {
 }
 
 func DoVersion() {
-	msg := fmt.Sprintf(
-		"Version: v%s\nCommit: %s\nBuild Time: %s\nAuthor: %s\nWebsite: https://ech0.app/\nLicense: %s\nSource: %s\n%s",
-		versionPkg.Version,
-		versionPkg.Commit,
-		versionPkg.BuildTime,
-		versionPkg.Author,
-		versionPkg.License,
-		versionPkg.RepoURL,
-		versionPkg.Copyright(),
+	items := []tuiUtil.CLIInfoItem{
+		{Title: "Version", Msg: "v" + versionPkg.Version},
+		{Title: "Commit", Msg: versionPkg.Commit},
+	}
+	// 源码构建不注入 BuildTime，空值就不占一行。
+	if versionPkg.BuildTime != "" {
+		items = append(items, tuiUtil.CLIInfoItem{Title: "Build Time", Msg: versionPkg.BuildTime})
+	}
+	items = append(items,
+		tuiUtil.CLIInfoItem{Title: "Author", Msg: versionPkg.Author},
+		tuiUtil.CLIInfoItem{Title: "Website", Msg: "https://ech0.app/"},
+		tuiUtil.CLIInfoItem{Title: "License", Msg: versionPkg.License},
+		tuiUtil.CLIInfoItem{Title: "Source", Msg: versionPkg.RepoURL},
+		// 空项渲染成空行，把版权与上面的字段表分开，免得它看着像个没有值的标签。
+		tuiUtil.CLIInfoItem{},
+		tuiUtil.CLIInfoItem{Msg: versionPkg.Copyright()},
 	)
-	if versionPkg.BuildTime == "" {
-		msg = fmt.Sprintf(
-			"Version: v%s\nCommit: %s\nAuthor: %s\nWebsite: https://ech0.app/\nLicense: %s\nSource: %s\n%s",
-			versionPkg.Version,
-			versionPkg.Commit,
-			versionPkg.Author,
-			versionPkg.License,
-			versionPkg.RepoURL,
-			versionPkg.Copyright(),
-		)
-	}
-	item := struct{ Title, Msg string }{
-		Title: "📦 Ech0",
-		Msg:   msg,
-	}
-	tuiUtil.PrintCLIWithBox(item)
+
+	tuiUtil.PrintCLIWithBox(tuiUtil.CLIBoxHeader{Icon: "📦", Title: "Ech0"}, items...)
 }
 
 func DoHello() {

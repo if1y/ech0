@@ -17,5 +17,8 @@ func setupMCPRoutes(groups *AppRouterGroup, h *handler.Bundle) {
 		middleware.RequireAudience(authModel.AudienceMCPRemote),
 	)
 	g.POST("", h.MCPHandler.ServeEndpoint())
+	// 2026-07-28 Streamable HTTP is POST-only; ServeEndpoint answers legacy
+	// GET (status/SSE probe) and DELETE (session teardown) with 405.
 	g.GET("", h.MCPHandler.ServeEndpoint())
+	g.DELETE("", h.MCPHandler.ServeEndpoint())
 }

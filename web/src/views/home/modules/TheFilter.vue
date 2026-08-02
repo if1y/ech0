@@ -56,7 +56,10 @@
         </div>
       </div>
 
-      <div v-if="isDateRangeActive || selectedTagChips.length > 0" class="flex flex-wrap gap-1.5">
+      <div
+        v-if="isDateRangeActive || isVisibilityFilterActive || selectedTagChips.length > 0"
+        class="flex flex-wrap gap-1.5"
+      >
         <div
           v-if="isDateRangeActive"
           class="home-filter__chip"
@@ -65,6 +68,17 @@
         >
           <p class="text-nowrap truncate">
             {{ t('commandPalette.activeChipDatePrefix') }} · {{ dateRangeSummary }}
+          </p>
+          <Close class="inline w-4 h-4 ml-1 shrink-0" />
+        </div>
+        <div
+          v-if="isVisibilityFilterActive"
+          class="home-filter__chip"
+          v-tooltip="t('commandPalette.reset')"
+          @click="handleClearVisibility"
+        >
+          <p class="text-nowrap truncate">
+            {{ t('commandPalette.activeChipVisibilityPrefix') }} · {{ visibilitySummary }}
           </p>
           <Close class="inline w-4 h-4 ml-1 shrink-0" />
         </div>
@@ -116,6 +130,7 @@ const {
   fetchCurrentPage,
   refreshEchos,
   resetDateRange,
+  resetVisibilityFilter,
   removeSelectedTag,
   ensureTagsLoaded,
 } = echoStore
@@ -127,6 +142,8 @@ const {
   dateFrom,
   dateTo,
   isDateRangeActive,
+  visibilityFilter,
+  isVisibilityFilterActive,
   selectedTagIds,
   tagList,
 } = storeToRefs(echoStore)
@@ -157,6 +174,12 @@ const dateRangeSummary = computed(() => {
   return `${from} ${t('commandPalette.rangeSeparator')} ${to}`
 })
 
+const visibilitySummary = computed(() =>
+  visibilityFilter.value === 'private'
+    ? t('commandPalette.visibilityPrivate')
+    : t('commandPalette.visibilityPublic'),
+)
+
 const selectedTagChips = computed(() => {
   if (!selectedTagIds.value.length) return []
   const byId = new Map(tagList.value.map((tag) => [tag.id, tag.name]))
@@ -177,6 +200,11 @@ const handleCancelTapFilter = () => {
 
 const handleClearDateRange = () => {
   resetDateRange()
+  refreshEchos()
+}
+
+const handleClearVisibility = () => {
+  resetVisibilityFilter()
   refreshEchos()
 }
 

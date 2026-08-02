@@ -41,6 +41,10 @@ export const useEchoStore = defineStore('echoStore', () => {
   const selectedTagIds = ref<string[]>([])
   const isTagSelectionActive = computed(() => selectedTagIds.value.length > 0)
 
+  // ── 可见性过滤（由高级搜索面板驱动；仅 admin 有效，服务端对无权限请求静默忽略）──
+  const visibilityFilter = ref<App.Api.Ech0.EchoVisibilityFilter>('all')
+  const isVisibilityFilterActive = computed(() => visibilityFilter.value !== 'all')
+
   // ─────────────────────────────────────────────
   //  watchers
   // ─────────────────────────────────────────────
@@ -75,6 +79,9 @@ export const useEchoStore = defineStore('echoStore', () => {
     if (dateTo.value !== null) {
       params.dateTo = dateTo.value
     }
+    if (visibilityFilter.value !== 'all') {
+      params.private = visibilityFilter.value === 'private'
+    }
     return params
   }
 
@@ -85,6 +92,10 @@ export const useEchoStore = defineStore('echoStore', () => {
 
   const resetSelectedTags = () => {
     selectedTagIds.value = []
+  }
+
+  const resetVisibilityFilter = () => {
+    visibilityFilter.value = 'all'
   }
 
   const removeSelectedTag = (tagId: string) => {
@@ -268,6 +279,10 @@ export const useEchoStore = defineStore('echoStore', () => {
     selectedTagIds,
     isTagSelectionActive,
 
+    // 可见性过滤
+    visibilityFilter,
+    isVisibilityFilterActive,
+
     // actions
     fetchCurrentPage,
     goToPage,
@@ -276,6 +291,7 @@ export const useEchoStore = defineStore('echoStore', () => {
     refreshForSearch,
     resetDateRange,
     resetSelectedTags,
+    resetVisibilityFilter,
     removeSelectedTag,
     updateEcho,
     updateLikeCount,

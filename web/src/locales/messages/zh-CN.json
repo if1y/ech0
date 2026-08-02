@@ -258,6 +258,9 @@
     "downloadFailed": "下载失败",
     "downloadFailedResponse": "下载失败：服务端返回异常内容"
   },
+  "staticSite": {
+    "likeUnavailable": "当前为静态归档站点，无法点赞。"
+  },
   "auth": {
     "loginSuccess": "登录成功,欢迎回来！🎉",
     "signupSuccess": "注册成功,请登录！"
@@ -399,6 +402,11 @@
     "dateRangeLast7Days": "最近 7 天",
     "dateRangeLast30Days": "最近 30 天",
     "dateRangeThisYear": "今年",
+    "visibilityLabel": "可见性",
+    "visibilityAll": "全部",
+    "visibilityPublic": "仅公开",
+    "visibilityPrivate": "仅私密",
+    "activeChipVisibilityPrefix": "可见性",
     "tagsLabel": "标签",
     "tagsHint": "任一匹配",
     "tagsEmpty": "暂无标签",
@@ -678,13 +686,20 @@
   },
   "exportSetting": {
     "title": "数据导出",
-    "description": "导出当前系统快照，便于离线归档与迁移。",
+    "description": "选择导出格式：备份实例，或带走内容。",
     "exportSnapshot": "导出快照",
+    "exportCapsule": "导出胶囊",
+    "formatSnapshotTitle": "快照",
+    "formatSnapshotDesc": "完整备份，含账号与凭据",
+    "formatCapsuleTitle": "胶囊",
+    "formatCapsuleDesc": "仅内容，可分享或生成静态站",
+    "includePrivate": "包含私密内容",
     "loginRequired": "请登录后使用",
     "exporting": "导出中...请稍等",
     "exportStarted": "导出已开始！",
     "exportFailed": "导出失败",
     "jobTitle": "快照导出",
+    "jobTitleCapsule": "胶囊导出",
     "artifactLabel": "产物",
     "redownload": "重新下载"
   },
@@ -851,7 +866,7 @@
   },
   "migrationSetting": {
     "title": "数据导入",
-    "description": "支持从 Ech0 v4、Memos 导入数据。",
+    "description": "支持从 Ech0 v4、Memos 以及 Ech0 胶囊导入数据。",
     "inDevelopment": "开发中",
     "sourceZip": "来源压缩包",
     "pickZip": "选择 zip 文件",
@@ -892,6 +907,10 @@
     "cleaned": "迁移记录已清理",
     "sourceEch0": "支持从 Ech0 导入",
     "sourceMemos": "支持 Memos（开发中）",
+    "sourceCapsuleTitle": "Ech0 胶囊",
+    "sourceCapsule": "支持从 Ech0 胶囊导入",
+    "capsuleNote": "追加导入，按 id 去重，不覆盖现有内容",
+    "capsuleIncludePrivate": "包含私密内容",
     "statusIdle": "空闲",
     "statusPending": "等待中",
     "statusRunning": "迁移中",
@@ -1140,6 +1159,8 @@
     "importPhaseLoading": "写入",
     "importPhaseReporting": "汇总",
     "importPhaseCompleted": "完成",
+    "importPhaseChecking": "校验",
+    "importPhaseImporting": "导入",
     "exportPhasePending": "准备",
     "exportPhasePacking": "打包",
     "exportPhaseCompleted": "完成"

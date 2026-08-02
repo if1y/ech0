@@ -83,6 +83,41 @@ func TestEchoRepository_QueryEchos_PrivateFilter(t *testing.T) {
 		assert.Equal(t, int64(2), total)
 		assert.Len(t, echos, 2)
 	})
+
+	ptr := func(b bool) *bool { return &b }
+
+	t.Run("showPrivate=true + Private=true narrows to private only", func(t *testing.T) {
+		echos, total, err := repo.QueryEchos(
+			commonModel.EchoQueryDto{Page: 1, PageSize: 10, Private: ptr(true)},
+			true,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		require.Len(t, echos, 1)
+		assert.Equal(t, "e-prv", echos[0].ID)
+	})
+
+	t.Run("showPrivate=true + Private=false narrows to public only", func(t *testing.T) {
+		echos, total, err := repo.QueryEchos(
+			commonModel.EchoQueryDto{Page: 1, PageSize: 10, Private: ptr(false)},
+			true,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		require.Len(t, echos, 1)
+		assert.Equal(t, "e-pub", echos[0].ID)
+	})
+
+	t.Run("showPrivate=false ignores Private=true (anti-leak)", func(t *testing.T) {
+		echos, total, err := repo.QueryEchos(
+			commonModel.EchoQueryDto{Page: 1, PageSize: 10, Private: ptr(true)},
+			false,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		require.Len(t, echos, 1)
+		assert.Equal(t, "e-pub", echos[0].ID)
+	})
 }
 
 func TestEchoRepository_QueryEchos_TagJoinDistinctCount(t *testing.T) {

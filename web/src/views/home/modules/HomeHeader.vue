@@ -20,7 +20,7 @@
     <div class="home-header__actions">
       <div class="home-header__links">
         <a
-          href="/rss"
+          :href="rssHref"
           v-tooltip="t('homeTop.rssTitle')"
           :aria-label="t('homeTop.rssTitle')"
           class="home-header__link-icon"
@@ -100,7 +100,7 @@ import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSettingStore, useUserStore, useThemeStore } from '@/stores'
-import { resolveAvatarUrl } from '@/service/request/shared'
+import { resolveAvatarUrl, isStaticMode, staticBase } from '@/service/request/shared'
 import { useRouter } from 'vue-router'
 
 const settingStore = useSettingStore()
@@ -111,6 +111,11 @@ const { SystemSetting } = storeToRefs(settingStore)
 const { user, isLogin } = storeToRefs(userStore)
 const { t } = useI18n()
 const router = useRouter()
+
+// 静态站（`ech0 build` 产物）没有后端：登录入口点进去也只能失败，直接不渲染。
+// RSS 也要改指——/rss 是 serve 模式的动态路由，静态产物里叫 rss.xml。
+const isStatic = isStaticMode()
+const rssHref = computed(() => (isStatic ? staticBase() + 'rss.xml' : '/rss'))
 
 const logo = computed(() => {
   if (isLogin.value && user.value?.avatar) {

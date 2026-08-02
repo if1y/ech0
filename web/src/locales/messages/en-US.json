@@ -258,6 +258,9 @@
     "downloadFailed": "Download failed",
     "downloadFailedResponse": "Download failed: server returned unexpected content"
   },
+  "staticSite": {
+    "likeUnavailable": "This is a static archive; liking is unavailable."
+  },
   "auth": {
     "loginSuccess": "Signed in successfully, welcome back! 🎉",
     "signupSuccess": "Sign up successful, please sign in."
@@ -399,6 +402,11 @@
     "dateRangeLast7Days": "Last 7 days",
     "dateRangeLast30Days": "Last 30 days",
     "dateRangeThisYear": "This year",
+    "visibilityLabel": "Visibility",
+    "visibilityAll": "All",
+    "visibilityPublic": "Public only",
+    "visibilityPrivate": "Private only",
+    "activeChipVisibilityPrefix": "Visibility",
     "tagsLabel": "Tags",
     "tagsHint": "Match any",
     "tagsEmpty": "No tags yet",
@@ -678,13 +686,20 @@
   },
   "exportSetting": {
     "title": "Data Export",
-    "description": "Export a system snapshot for offline archive and migration.",
+    "description": "Choose a format: back up the instance, or take the content with you.",
     "exportSnapshot": "Export Snapshot",
+    "exportCapsule": "Export Capsule",
+    "formatSnapshotTitle": "Snapshot",
+    "formatSnapshotDesc": "Full backup, with accounts and credentials",
+    "formatCapsuleTitle": "Capsule",
+    "formatCapsuleDesc": "Content only, for sharing or building a static site",
+    "includePrivate": "Include private content",
     "loginRequired": "Please sign in first",
     "exporting": "Exporting... please wait",
     "exportStarted": "Export started!",
     "exportFailed": "Export failed",
     "jobTitle": "Snapshot export",
+    "jobTitleCapsule": "Capsule export",
     "artifactLabel": "Artifact",
     "redownload": "Download again"
   },
@@ -851,7 +866,7 @@
   },
   "migrationSetting": {
     "title": "Data Import",
-    "description": "Supports importing data from Ech0 v4 and Memos.",
+    "description": "Supports importing data from Ech0 v4, Memos, and Ech0 capsules.",
     "inDevelopment": "In development",
     "sourceZip": "Source zip package",
     "pickZip": "Choose zip file",
@@ -892,6 +907,10 @@
     "cleaned": "Migration records cleaned",
     "sourceEch0": "Supports importing from Ech0",
     "sourceMemos": "Supports Memos (in development)",
+    "sourceCapsuleTitle": "Ech0 Capsule",
+    "sourceCapsule": "Supports importing from Ech0 capsules",
+    "capsuleNote": "Appends content, de-duplicated by id, never overwrites",
+    "capsuleIncludePrivate": "Include private content",
     "statusIdle": "Idle",
     "statusPending": "Pending",
     "statusRunning": "Running",
@@ -1140,6 +1159,8 @@
     "importPhaseLoading": "Load",
     "importPhaseReporting": "Summarize",
     "importPhaseCompleted": "Done",
+    "importPhaseChecking": "Check",
+    "importPhaseImporting": "Import",
     "exportPhasePending": "Prepare",
     "exportPhasePacking": "Pack",
     "exportPhaseCompleted": "Done"

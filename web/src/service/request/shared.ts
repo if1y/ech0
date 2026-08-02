@@ -22,6 +22,23 @@ export function buildCommonHeaders(): Record<string, string> {
   return headers
 }
 
+/**
+ * 静态站（`ech0 build` 产物）开关：index.html 里注入 `window.__ECH0_STATIC__ = true`。
+ * 判定必须极轻且不 import adapter，保证非静态构建下 adapter 不进主 chunk。
+ */
+export function isStaticMode(): boolean {
+  return typeof window !== 'undefined' && window.__ECH0_STATIC__ === true
+}
+
+/**
+ * 静态站的部署基址（`ech0 build --base-url` 注入），恒以 / 结尾。
+ * 子路径部署时站内绝对链接必须带上它，否则 /rss.xml 会打到域名根。
+ */
+export function staticBase(): string {
+  if (typeof window === 'undefined') return '/'
+  return window.__ECH0_STATIC_BASE__ || '/'
+}
+
 export const getApiUrl = () => {
   const baseUrl = import.meta.env.VITE_SERVICE_BASE_URL
   const resolvedBaseUrl = baseUrl.replace(/\/+$/, '') // 正则去除末尾的斜杠

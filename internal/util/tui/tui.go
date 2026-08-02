@@ -101,41 +101,106 @@ func PrintCLIInfo(title, msg string) {
 	}
 }
 
-// CLIInfoItem 定义了一个CLI信息项，包含标题和消息
+// CLIInfoItem 是信息框里的一条统计项。Title 为空表示自由文本块（整体缩进，不参与列对齐）。
 type CLIInfoItem struct {
 	Title string
 	Msg   string
 }
 
-// GetCLIPrintWithBox 获取带边框的CLI信息打印内容
-func GetCLIPrintWithBox(items ...CLIInfoItem) string {
-	if len(items) == 0 {
+// CLIBoxHeader 是信息框的标题行：图标 + 主语 + 值（通常是产物路径）。
+//
+// 标题行与下方统计项分开渲染，因为两者回答的是不同问题——「这是什么、在哪」对「有多少」。
+// 图标尤其必须待在这里：emoji 是宽度不定的字形（部分还带变体选择符），一旦混进统计项的
+// 标签列，整列对齐就会被它顶歪。
+type CLIBoxHeader struct {
+	Icon  string
+	Title string
+	Value string
+}
+
+// boxLabelGap 是标签列与值列之间的间距。
+const boxLabelGap = 2
+
+// GetCLIPrintWithBox 渲染带边框的信息框：一行标题，下面是标签对齐的统计项。
+func GetCLIPrintWithBox(header CLIBoxHeader, items ...CLIInfoItem) string {
+	lines := make([]string, 0, len(items)+2)
+
+	if head := renderBoxHeader(header); head != "" {
+		lines = append(lines, head)
+		if len(items) > 0 {
+			lines = append(lines, "")
+		}
+	}
+
+	// 标签列补齐到最宽一项，让所有值的左端落在同一列，纵向一扫就能比。
+	// 用 lipgloss.Width 而非 len：宽字符与转义序列都得算对。
+	labelWidth := 0
+	for _, item := range items {
+		if w := lipgloss.Width(item.Title); w > labelWidth {
+			labelWidth = w
+		}
+	}
+
+	// 有标题时统计项缩进一级，视觉上归属于标题。
+	indent := ""
+	if header.Title != "" || header.Value != "" {
+		indent = "  "
+	}
+
+	for _, item := range items {
+		lines = append(lines, renderBoxItem(item, labelWidth, indent)...)
+	}
+
+	if len(lines) == 0 {
+		return ""
+	}
+	return boxStyle.Render(strings.Join(lines, "\n"))
+}
+
+func renderBoxHeader(h CLIBoxHeader) string {
+	if strings.TrimSpace(h.Title) == "" && strings.TrimSpace(h.Value) == "" {
 		return ""
 	}
 
-	var content string
-	for i, item := range items {
-		line := infoStyle.Render(titleStyle.Render(item.Title) + ": " + highlight.Render(item.Msg))
-		if strings.Contains(item.Msg, "\n") {
-			line = lipgloss.JoinVertical(
-				lipgloss.Left,
-				infoStyle.Render(titleStyle.Render(item.Title)),
-				infoStyle.Render(highlight.Render(item.Msg)),
-			)
+	var b strings.Builder
+	if h.Icon != "" {
+		b.WriteString(h.Icon)
+		b.WriteString("  ")
+	}
+	b.WriteString(titleStyle.Render(h.Title))
+	if h.Value != "" {
+		b.WriteString("  ")
+		b.WriteString(highlight.Render(h.Value))
+	}
+	return infoStyle.Render(b.String())
+}
+
+func renderBoxItem(item CLIInfoItem, labelWidth int, indent string) []string {
+	parts := strings.Split(item.Msg, "\n")
+
+	if item.Title == "" {
+		out := make([]string, 0, len(parts))
+		for _, line := range parts {
+			out = append(out, infoStyle.Render(indent+highlight.Render(line)))
 		}
-		if i > 0 {
-			content += "\n"
-		}
-		content += line
+		return out
 	}
 
-	boxedContent := boxStyle.Render(content)
-	return boxedContent
+	label := indent + titleStyle.Render(item.Title) +
+		strings.Repeat(" ", labelWidth-lipgloss.Width(item.Title)+boxLabelGap)
+	out := []string{infoStyle.Render(label + highlight.Render(parts[0]))}
+
+	// 续行对齐到值列，多行值不会甩回标签列下面。
+	continuation := indent + strings.Repeat(" ", labelWidth+boxLabelGap)
+	for _, line := range parts[1:] {
+		out = append(out, infoStyle.Render(continuation+highlight.Render(line)))
+	}
+	return out
 }
 
 // PrintCLIWithBox 打印带边框的CLI信息
-func PrintCLIWithBox(items ...CLIInfoItem) {
-	if _, err := fmt.Fprintln(os.Stdout, GetCLIPrintWithBox(items...)); err != nil {
+func PrintCLIWithBox(header CLIBoxHeader, items ...CLIInfoItem) {
+	if _, err := fmt.Fprintln(os.Stdout, GetCLIPrintWithBox(header, items...)); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to print cli box: %v\n", err)
 	}
 }

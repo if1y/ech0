@@ -27,6 +27,13 @@
       </button>
     </div>
 
+    <div v-if="sourceType === 'capsule'" class="migration-capsule-panel">
+      <p class="migration-capsule-note">{{ t('migrationSetting.capsuleNote') }}</p>
+      <BaseSwitch v-model="capsuleIncludePrivate" :disabled="isSubmittingMigration">
+        {{ t('migrationSetting.capsuleIncludePrivate') }}
+      </BaseSwitch>
+    </div>
+
     <div class="migration-form">
       <div class="migration-row migration-row-top">
         <span class="migration-label">{{ t('migrationSetting.sourceZip') }}</span>
@@ -103,13 +110,13 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/common/BaseButton.vue'
+import BaseSwitch from '@/components/common/BaseSwitch.vue'
 import JobProgressCard from './components/JobProgressCard.vue'
-import { fetchUploadMigrationSourceZip } from '@/service/api'
+import { fetchUploadMigrationSourceZip, type MigrationSourceType } from '@/service/api'
 import { useMigrationStore } from '@/stores'
 import { theToast } from '@/utils/toast'
 
-type MigrationSourceType = 'ech0' | 'memos'
-
+// SourceCard 的 value 直接复用 API 契约里的来源枚举,避免两处各写一份。
 interface SourceCard {
   value: MigrationSourceType
   title: string
@@ -119,6 +126,11 @@ interface SourceCard {
 
 const sourceCards = computed<SourceCard[]>(() => [
   { value: 'ech0', title: 'Ech0', desc: String(t('migrationSetting.sourceEch0')) },
+  {
+    value: 'capsule',
+    title: String(t('migrationSetting.sourceCapsuleTitle')),
+    desc: String(t('migrationSetting.sourceCapsule')),
+  },
   {
     value: 'memos',
     title: 'Memos',
@@ -130,6 +142,7 @@ const sourceCards = computed<SourceCard[]>(() => [
 const sourceType = ref<MigrationSourceType>('ech0')
 const selectedZip = ref<File | null>(null)
 const selectedZipName = ref('')
+const capsuleIncludePrivate = ref(false)
 const isUploadingZip = ref(false)
 const isCreatingMigration = ref(false)
 const migrationStore = useMigrationStore()
@@ -145,6 +158,7 @@ const statusLabelMap = computed<Record<string, string>>(() => ({
 const sourceLabelMap = computed<Record<string, string>>(() => ({
   ech0: 'Ech0',
   memos: 'Memos',
+  capsule: String(t('migrationSetting.sourceCapsuleTitle')),
 }))
 const migrationReport = computed(
   () => (migrationStore.state.source_payload?.report as Record<string, unknown> | undefined) ?? {},
@@ -178,13 +192,23 @@ const jobSubtitle = computed(
     `${t('migrationSetting.source')} ${sourceLabelMap.value[migrationStore.state.source_type] || migrationStore.state.source_type}`,
 )
 
-// 步进器对齐 ech0 importer 实际发出的阶段:解析 → 写入 → 汇总 → 完成。
-const importSteps = computed(() => [
-  { key: 'extracting', label: String(t('jobProgress.importPhaseExtracting')) },
-  { key: 'loading', label: String(t('jobProgress.importPhaseLoading')) },
-  { key: 'reporting', label: String(t('jobProgress.importPhaseReporting')) },
-  { key: 'completed', label: String(t('jobProgress.importPhaseCompleted')) },
-])
+// 步进器阶段名由具体 importer 决定:ech0 走 解析→写入→汇总→完成,
+// 胶囊 importer 只上报 校验→导入→完成,两套不能混用。
+const importSteps = computed(() => {
+  if (migrationStore.state.source_type === 'capsule') {
+    return [
+      { key: 'checking', label: String(t('jobProgress.importPhaseChecking')) },
+      { key: 'importing', label: String(t('jobProgress.importPhaseImporting')) },
+      { key: 'completed', label: String(t('jobProgress.importPhaseCompleted')) },
+    ]
+  }
+  return [
+    { key: 'extracting', label: String(t('jobProgress.importPhaseExtracting')) },
+    { key: 'loading', label: String(t('jobProgress.importPhaseLoading')) },
+    { key: 'reporting', label: String(t('jobProgress.importPhaseReporting')) },
+    { key: 'completed', label: String(t('jobProgress.importPhaseCompleted')) },
+  ]
+})
 
 const metricText = (v: unknown) => (v === undefined || v === null ? '—' : String(v))
 const failIsPositive = computed(() => {
@@ -295,7 +319,11 @@ const handleStartMigration = async () => {
       theToast.error(uploadRes.msg || String(t('migrationSetting.uploadFailed')))
       return
     }
-    const sourcePayload = uploadRes.data?.source_payload ?? {}
+    const sourcePayload: Record<string, unknown> = { ...(uploadRes.data?.source_payload ?? {}) }
+    // 私密内容开关只对胶囊有意义,随 source_payload 交给后端作业。
+    if (sourceType.value === 'capsule') {
+      sourcePayload.include_private = capsuleIncludePrivate.value
+    }
 
     isUploadingZip.value = false
     isCreatingMigration.value = true
@@ -440,6 +468,18 @@ void migrationStore.init()
 .migration-source-card.active {
   border-color: var(--color-nav-active-bg);
   box-shadow: inset 0 0 0 1px var(--color-nav-active-bg);
+}
+
+.migration-capsule-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.migration-capsule-note {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
 }
 
 .migration-form {

@@ -258,6 +258,9 @@
     "downloadFailed": "Download fehlgeschlagen",
     "downloadFailedResponse": "Download fehlgeschlagen: unerwartete Serverantwort"
   },
+  "staticSite": {
+    "likeUnavailable": "Dies ist ein statisches Archiv; Liken ist nicht möglich."
+  },
   "auth": {
     "loginSuccess": "Anmeldung erfolgreich – willkommen zurück! 🎉",
     "signupSuccess": "Registrierung erfolgreich, bitte anmelden."
@@ -399,6 +402,11 @@
     "dateRangeLast7Days": "Letzte 7 Tage",
     "dateRangeLast30Days": "Letzte 30 Tage",
     "dateRangeThisYear": "Dieses Jahr",
+    "visibilityLabel": "Sichtbarkeit",
+    "visibilityAll": "Alle",
+    "visibilityPublic": "Nur öffentlich",
+    "visibilityPrivate": "Nur privat",
+    "activeChipVisibilityPrefix": "Sichtbarkeit",
     "tagsLabel": "Tags",
     "tagsHint": "Beliebiges passt",
     "tagsEmpty": "Noch keine Tags",
@@ -678,13 +686,20 @@
   },
   "exportSetting": {
     "title": "Datenexport",
-    "description": "Systemsnapshot zur Archivierung und Migration exportieren.",
+    "description": "Format wählen: die Instanz sichern oder die Inhalte mitnehmen.",
     "exportSnapshot": "Snapshot exportieren",
+    "exportCapsule": "Kapsel exportieren",
+    "formatSnapshotTitle": "Snapshot",
+    "formatSnapshotDesc": "Vollständige Sicherung, mit Konten und Zugangsdaten",
+    "formatCapsuleTitle": "Kapsel",
+    "formatCapsuleDesc": "Nur Inhalte, zum Teilen oder für statische Seiten",
+    "includePrivate": "Private Inhalte einbeziehen",
     "loginRequired": "Bitte zuerst anmelden",
     "exporting": "Wird exportiert… bitte warten",
     "exportStarted": "Export gestartet!",
     "exportFailed": "Export fehlgeschlagen",
     "jobTitle": "Snapshot-Export",
+    "jobTitleCapsule": "Kapsel-Export",
     "artifactLabel": "Artefakt",
     "redownload": "Erneut herunterladen"
   },
@@ -851,7 +866,7 @@
   },
   "migrationSetting": {
     "title": "Datenimport",
-    "description": "Import aus Ech0 v4 sowie Memos wird unterstützt.",
+    "description": "Import aus Ech0 v4, Memos sowie Ech0-Kapseln wird unterstützt.",
     "inDevelopment": "In Entwicklung",
     "sourceZip": "Quell-ZIP-Datei",
     "pickZip": "ZIP-Datei wählen",
@@ -892,6 +907,10 @@
     "cleaned": "Migrationseinträge aufgeräumt",
     "sourceEch0": "Unterstützt Import aus Ech0",
     "sourceMemos": "Unterstützt Memos (in Entwicklung)",
+    "sourceCapsuleTitle": "Ech0-Kapsel",
+    "sourceCapsule": "Unterstützt Import aus Ech0-Kapseln",
+    "capsuleNote": "Ergänzt Inhalte, per ID dedupliziert, überschreibt nichts",
+    "capsuleIncludePrivate": "Private Inhalte einschließen",
     "statusIdle": "Bereit",
     "statusPending": "Wartend",
     "statusRunning": "Läuft",
@@ -1140,6 +1159,8 @@
     "importPhaseLoading": "Laden",
     "importPhaseReporting": "Bericht",
     "importPhaseCompleted": "Fertig",
+    "importPhaseChecking": "Prüfen",
+    "importPhaseImporting": "Import",
     "exportPhasePending": "Vorber.",
     "exportPhasePacking": "Packen",
     "exportPhaseCompleted": "Fertig"
