@@ -56,28 +56,32 @@
           <component :is="themeIcon" class="w-4 h-4" />
         </button>
         <TheLocaleToggle />
-        <button
-          v-if="!isLogin"
-          type="button"
-          v-tooltip="t('authPage.login')"
-          :title="t('authPage.login')"
-          :aria-label="t('authPage.login')"
-          class="home-header__link-icon"
-          @click="handleGoLogin"
-        >
-          <Auth class="block w-4 h-4" />
-        </button>
-        <button
-          v-else
-          type="button"
-          v-tooltip="t('homeSidebar.panel')"
-          :title="t('homeSidebar.panel')"
-          :aria-label="t('homeSidebar.panel')"
-          class="home-header__link-icon"
-          @click="handleGoPanel"
-        >
-          <Setting class="block w-4 h-4" />
-        </button>
+        <!-- 静态站没有后端：登录与登出两个入口都不该出现（只藏登录会让 v-else
+             把登出顶上来，反而更糟）。 -->
+        <template v-if="!isStatic">
+          <button
+            v-if="!isLogin"
+            type="button"
+            v-tooltip="t('authPage.login')"
+            :title="t('authPage.login')"
+            :aria-label="t('authPage.login')"
+            class="home-header__link-icon"
+            @click="handleGoLogin"
+          >
+            <Auth class="block w-4 h-4" />
+          </button>
+          <button
+            v-else
+            type="button"
+            v-tooltip="t('homeSidebar.panel')"
+            :title="t('homeSidebar.panel')"
+            :aria-label="t('homeSidebar.panel')"
+            class="home-header__link-icon"
+            @click="handleGoPanel"
+          >
+            <Setting class="block w-4 h-4" />
+          </button>
+        </template>
       </div>
     </div>
   </div>
