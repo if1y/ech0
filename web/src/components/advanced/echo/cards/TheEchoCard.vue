@@ -35,6 +35,11 @@
       </div>
 
       <div v-else-if="userStore.isLogin" class="relative flex items-center justify-center">
+        <Lock
+          v-if="props.echo.private"
+          v-tooltip="t('echoCard.privateStatus')"
+          class="w-3 h-3 text-[var(--color-text-muted)] mr-1"
+        />
         <button
           ref="menuTriggerRef"
           type="button"
@@ -62,15 +67,6 @@
               :style="menuPanelStyle"
               class="fixed z-5000 w-36 origin-top-right rounded-[var(--radius-md)] bg-[var(--color-bg-muted)] ring-1 ring-[var(--color-border-subtle)] shadow-[var(--shadow-md)] p-1"
             >
-              <div
-                v-if="props.echo.private"
-                class="flex items-center gap-1.5 px-2 pt-1 pb-1.5 text-[var(--color-text-muted)]"
-              >
-                <Lock class="w-3 h-3" />
-                <span class="text-[10px] font-semibold tracking-[0.08em] uppercase">
-                  {{ t('echoCard.privateStatus') }}
-                </span>
-              </div>
 
               <button
                 type="button"

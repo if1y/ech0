@@ -20,6 +20,8 @@ type SystemSetting struct {
 	ServerLogo    string `json:"server_logo"`    // 服务器Logo
 	ServerName    string `json:"server_name"`    // 服务器名称
 	ServerURL     string `json:"server_url"`     // 服务器地址
+	BannerContent string `json:"banner_content"` // 自定义公告栏（只支持纯文本，为空则隐藏公告栏）
+	SidebarText   string `json:"sidebar_text"`   // 自定义侧栏文本（支持 HTML）
 	AllowRegister bool   `json:"allow_register"` // 是否允许注册'
 	DefaultLocale string `json:"default_locale"` // 站点默认语言（如 zh-CN / en-US）
 	ICPNumber     string `json:"ICP_number"`     // 备案号

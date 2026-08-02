@@ -146,6 +146,49 @@
           class="w-full py-1!"
         />
       </div>
+      <!-- 首页公告栏 -->
+      <div class="flex flex-row justify-start text-[var(--color-text-secondary)] gap-2 mb-1">
+        <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
+          {{ t('systemSetting.bannerContent') }}:
+        </h2>
+        <span
+          v-if="!editMode"
+          class="flex-1 min-w-0 truncate inline-block align-middle"
+          v-tooltip="SystemSetting.banner_content"
+          style="vertical-align: middle"
+          >{{ SystemSetting?.banner_content?.length === 0 ? t('commonUi.none') : SystemSetting.banner_content }}</span
+        >
+        <BaseTextArea
+          v-else
+          v-model="SystemSetting.banner_content"
+          type="text"
+          :placeholder="t('systemSetting.bannerContentPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
+      <!-- 自定义侧栏文本 -->
+      <div class="flex flex-row justify-start text-[var(--color-text-secondary)] gap-2 mb-1">
+        <h2 class="font-semibold min-w-28 md:min-w-32 shrink-0 break-words leading-5">
+          {{ t('systemSetting.sidebarText') }}:
+        </h2>
+        <span
+          v-if="!editMode"
+          class="flex-1 min-w-0 truncate inline-block align-middle"
+          v-tooltip="SystemSetting.sidebar_text"
+          style="vertical-align: middle"
+        >
+          {{
+            SystemSetting.sidebar_text.length === 0 ? t('commonUi.none') : SystemSetting.sidebar_text
+          }}
+        </span>
+        <BaseTextArea
+          v-else
+          v-model="SystemSetting.sidebar_text"
+          type="text"
+          :placeholder="t('systemSetting.sidebarTextPlaceholder')"
+          class="w-full py-1!"
+        />
+      </div>
       <!-- 自定义页脚链接 -->
       <div
         class="flex flex-row items-center justify-start text-[var(--color-text-secondary)] gap-2 mb-1"

@@ -13,10 +13,10 @@ set shell := ["bash", "-cu"]
 # --- Build metadata (resolved at parse time, same as Makefile) ---
 VERSION       := `git describe --tags --always 2>/dev/null || echo unknown`
 BUILD_TIME    := `date -u +%Y-%m-%dT%H:%M:%SZ`
-GIT_COMMIT    := `git rev-parse --short HEAD 2>/dev/null || echo unknown`
+BUILD_LABEL   := `echo "${BUILD_LABEL:-custom}"`
 
 VERSION_PKG   := "github.com/lin-snow/ech0/internal/version"
-LDFLAGS       := "-X " + VERSION_PKG + ".Commit=" + GIT_COMMIT + " -X " + VERSION_PKG + ".BuildTime=" + BUILD_TIME
+LDFLAGS       := "-X " + VERSION_PKG + ".Commit=" + BUILD_LABEL + " -X " + VERSION_PKG + ".BuildTime=" + BUILD_TIME
 
 # --- Docker (overridable via env: DOCKER_REGISTRY=foo just build-image) ---
 GOHOSTOS        := `go env GOHOSTOS`

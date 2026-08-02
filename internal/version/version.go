@@ -35,9 +35,10 @@ const (
 	StartYear = 2025
 )
 
-// Commit is the short git commit hash, injected at build time.
-// Defaults to "unknown" so `go run` / unbranded local builds still compile.
-var Commit = "unknown"
+// Commit is the user-facing build identifier shown on the About page.
+// Defaults to "custom" to avoid leaking the real git commit hash.
+// Override at build time: -X github.com/lin-snow/ech0/internal/version.Commit=<value>
+var Commit = "custom"
 
 // BuildTime is the RFC3339 build timestamp, injected at build time.
 // Empty when not injected.

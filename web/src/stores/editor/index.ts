@@ -31,6 +31,7 @@ export const useEditorStore = defineStore('editorStore', () => {
   const currentExtensionType = ref<ExtensionType>()
   const isSubmitting = ref<boolean>(false)
   const isUpdateMode = ref<boolean>(false)
+  const customCreatedAt = ref<string>('')
 
   const echoToAdd = ref<App.Api.Ech0.EchoToAdd>({
     content: '',
@@ -42,6 +43,13 @@ export const useEditorStore = defineStore('editorStore', () => {
   const tagToAdd = ref<string[]>([])
 
   const hasContent = computed(() => !!echoToAdd.value.content?.trim())
+
+  /** 校验 customCreatedAt 格式：非空且不可解析时视为非法 */
+  const isCustomCreatedAtValid = computed(() => {
+    const v = customCreatedAt.value.trim()
+    if (!v) return true // 空 = 跳过，合法
+    return !isNaN(new Date(v).getTime())
+  })
 
   //================================================================
   // 子模块组合
@@ -121,6 +129,7 @@ export const useEditorStore = defineStore('editorStore', () => {
     }
     files.resetFilesState()
     extension.resetExtensionState()
+    customCreatedAt.value = ''
     tagToAdd.value = []
     draft.clearLocalDraft()
   }
@@ -207,6 +216,19 @@ export const useEditorStore = defineStore('editorStore', () => {
         echoToAdd.value.layout = ImageLayout.WATERFALL
       }
 
+      // 解析自定义发表时间：非法时 return 阻止提交，组件外层可见红框提示
+      const trimmedTime = customCreatedAt.value.trim()
+      if (trimmedTime) {
+        const date = new Date(trimmedTime)
+        if (!isNaN(date.getTime())) {
+          echoToAdd.value.created_at = Math.floor(date.getTime() / 1000)
+        } else {
+          return
+        }
+      } else {
+        echoToAdd.value.created_at = null
+      }
+
       // 回填标签板块
       echoToAdd.value.tags = (tagToAdd.value ?? [])
         .map((name) => name.trim())
@@ -256,6 +278,7 @@ export const useEditorStore = defineStore('editorStore', () => {
         echoStore.echoToUpdate.echo_files = echoToAdd.value.echo_files
         echoStore.echoToUpdate.extension = echoToAdd.value.extension
         echoStore.echoToUpdate.tags = echoToAdd.value.tags
+        echoStore.echoToUpdate.created_at = echoToAdd.value.created_at ?? echoStore.echoToUpdate.created_at
 
         theToast.promise(fetchUpdateEcho(echoStore.echoToUpdate), {
           loading: justSyncFiles ? t('editor.syncingFiles') : t('editor.updating'),
@@ -331,6 +354,8 @@ export const useEditorStore = defineStore('editorStore', () => {
     extensionToAdd: extension.extensionToAdd,
     locationToAdd: extension.locationToAdd,
     tweetToAdd: extension.tweetToAdd,
+    customCreatedAt,
+    isCustomCreatedAtValid,
     tagToAdd,
 
     // ===== 方法 =====

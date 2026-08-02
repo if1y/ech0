@@ -73,13 +73,13 @@
           <button
             v-else
             type="button"
-            v-tooltip="t('panelPage.logout')"
-            :title="t('panelPage.logout')"
-            :aria-label="t('panelPage.logout')"
+            v-tooltip="t('homeSidebar.panel')"
+            :title="t('homeSidebar.panel')"
+            :aria-label="t('homeSidebar.panel')"
             class="home-header__link-icon"
-            @click="handleLogout"
+            @click="handleGoPanel"
           >
-            <Signoff class="block w-4 h-4" />
+            <Setting class="block w-4 h-4" />
           </button>
         </template>
       </div>
@@ -93,7 +93,7 @@ import DarkIcon from '@/components/icons/dark.vue'
 import TreeIcon from '@/components/icons/tree.vue'
 import Rss from '@/components/icons/rss.vue'
 import Auth from '@/components/icons/auth.vue'
-import Signoff from '@/components/icons/signoff.vue'
+import Setting from '@/components/icons/setting.vue'
 import Zen from '@/components/icons/zen.vue'
 import TheLocaleToggle from '@/components/common/TheLocaleToggle.vue'
 import { storeToRefs } from 'pinia'
@@ -102,8 +102,6 @@ import { useI18n } from 'vue-i18n'
 import { useSettingStore, useUserStore, useThemeStore } from '@/stores'
 import { resolveAvatarUrl, isStaticMode, staticBase } from '@/service/request/shared'
 import { useRouter } from 'vue-router'
-import { theToast } from '@/utils/toast'
-import { useBaseDialog } from '@/composables/useBaseDialog'
 
 const settingStore = useSettingStore()
 const userStore = useUserStore()
@@ -113,7 +111,6 @@ const { SystemSetting } = storeToRefs(settingStore)
 const { user, isLogin } = storeToRefs(userStore)
 const { t } = useI18n()
 const router = useRouter()
-const { openConfirm } = useBaseDialog()
 
 // 静态站（`ech0 build` 产物）没有后端：登录入口点进去也只能失败，直接不渲染。
 // RSS 也要改指——/rss 是 serve 模式的动态路由，静态产物里叫 rss.xml。
@@ -213,17 +210,8 @@ const handleGoLogin = async () => {
   await router.push({ name: 'auth' })
 }
 
-const handleLogout = () => {
-  if (!isLogin.value) return
-  openConfirm({
-    title: String(t('panelPage.logoutConfirmTitle')),
-    description: '',
-    onConfirm: async () => {
-      await userStore.logout()
-      await router.push({ name: 'home' })
-      theToast.success(String(t('panelPage.logoutSuccess')))
-    },
-  })
+const handleGoPanel = async () => {
+  await router.push({ name: 'panel' })
 }
 
 watch(fullTitle, (nextTitle, prevTitle) => {

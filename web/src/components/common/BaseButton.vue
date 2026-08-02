@@ -11,6 +11,7 @@
           : 'hover:bg-[var(--btn-hover-bg-color)] hover:ring-[var(--btn-hover-border-color)] focus-visible:ring-2 focus-visible:ring-[var(--btn-focus-ring-color)]',
         props.class,
       ]"
+      :type="type"
       :disabled="isDisabled"
       :aria-label="resolvedAriaLabel"
       @click="onClick"
@@ -42,6 +43,7 @@ const props = defineProps<{
   tooltip?: string
   title?: string
   ariaLabel?: string
+  type?: 'button' | 'submit' | 'reset'
 }>()
 
 const emit = defineEmits<{
@@ -57,6 +59,7 @@ const isDisabled = computed(() => props.disabled || props.loading)
 const resolvedTooltip = computed(() => props.tooltip ?? props.title ?? '')
 const effectiveTooltip = computed(() => resolvedTooltip.value)
 const resolvedAriaLabel = computed(() => props.ariaLabel ?? (effectiveTooltip.value || undefined))
+const type = computed(() => props.type ?? 'button')
 
 function onClick(event: MouseEvent) {
   if (!isDisabled.value) emit('click', event)

@@ -40,11 +40,10 @@ ARG GIT_COMMIT
 ARG BUILD_TIME
 
 # 与 release.yml「Build backend binary with embedded frontend」一致（embed 读取 template/dist）
-RUN COMMIT="${GIT_COMMIT:-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)}" \
-    && BUILD="${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" \
+RUN BUILD="${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" \
     && CGO_ENABLED=1 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -tags netgo \
-    -ldflags="-linkmode external -extldflags '-static' -X github.com/lin-snow/ech0/internal/version.Commit=${COMMIT} -X github.com/lin-snow/ech0/internal/version.BuildTime=${BUILD}" \
+    -ldflags="-linkmode external -extldflags '-static' -X github.com/lin-snow/ech0/internal/version.Commit=custom -X github.com/lin-snow/ech0/internal/version.BuildTime=${BUILD}" \
     -o ech0 ./cmd/ech0/main.go
 
 # =================== 最终镜像（对齐根目录 Dockerfile 运行时层）===================
